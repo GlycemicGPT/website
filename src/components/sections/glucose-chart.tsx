@@ -5,15 +5,12 @@ import dynamic from "next/dynamic";
 import { AnimatedSection } from "@/components/animated-section";
 import {
   allGlucoseData,
-  allBolusData,
   filterByPeriod,
-  getBasalAt,
   getRangeColor,
   formatTime,
   formatDate,
   formatDateTime,
   PERIODS,
-  type BolusEvent,
   type GlucoseReading,
 } from "@/lib/sample-data";
 import { ArrowRight } from "lucide-react";
@@ -24,10 +21,6 @@ const ComposedChart = dynamic(
 );
 const Scatter = dynamic(
   () => import("recharts").then((m) => m.Scatter),
-  { ssr: false }
-);
-const Line = dynamic(
-  () => import("recharts").then((m) => m.Line),
   { ssr: false }
 );
 const XAxis = dynamic(
@@ -60,13 +53,7 @@ const ZAxis = dynamic(
 );
 
 interface TooltipPayloadItem {
-  payload: {
-    timestamp: number;
-    value?: number;
-    units?: number;
-    type?: string;
-    rate?: number;
-  };
+  payload: { timestamp: number; value?: number };
   dataKey: string;
 }
 
@@ -80,25 +67,8 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
-
-  // Bolus tooltip
-  if (data.units != null) {
-    return (
-      <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
-        <div className="text-xs font-medium text-primary">
-          {data.type === "meal" ? "Meal Bolus" : "Correction"}
-        </div>
-        <div className="text-sm font-bold">{data.units}u</div>
-        <div className="text-xs text-muted-foreground">
-          {formatDateTime(data.timestamp)}
-        </div>
-      </div>
-    );
-  }
-
-  // Glucose tooltip
   const value = data.value ?? 0;
-  const basal = getBasalAt(data.timestamp);
+
   const idx = allGlucoseData.findIndex((d) => d.timestamp === data.timestamp);
   const prev = idx > 3 ? allGlucoseData[idx - 3].value : value;
   const diff = value - prev;
@@ -120,15 +90,15 @@ function CustomTooltip({
 
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
-      <div className="text-lg font-bold" style={{ color: getRangeColor(value) }}>
+      <div
+        className="text-lg font-bold"
+        style={{ color: getRangeColor(value) }}
+      >
         {value} mg/dL {trendArrow}
       </div>
       <div className="text-xs text-muted-foreground">{trend}</div>
       <div className="text-xs text-muted-foreground">
         {formatDateTime(data.timestamp)}
-      </div>
-      <div className="mt-1 border-t border-border pt-1 text-xs text-muted-foreground">
-        Basal: {basal} u/hr
       </div>
     </div>
   );
@@ -165,12 +135,6 @@ export function GlucoseChartSection() {
   const period = PERIODS[periodIdx];
 
   const glucoseData = filterByPeriod(allGlucoseData, period.hours);
-  const bolusData = filterByPeriod(allBolusData, period.hours);
-
-  const basalData = glucoseData.map((g) => ({
-    timestamp: g.timestamp,
-    rate: getBasalAt(g.timestamp),
-  }));
 
   const inRange = glucoseData.filter((d) => d.value >= 70 && d.value <= 180);
   const highLow = glucoseData.filter(
@@ -178,11 +142,23 @@ export function GlucoseChartSection() {
   );
   const urgent = glucoseData.filter((d) => d.value > 250 || d.value < 55);
 
-  const bolusPoints = bolusData.map((b) => ({ ...b, plotY: 50 }));
-
   const currentValue =
     glucoseData.length > 0 ? glucoseData[glucoseData.length - 1].value : 0;
   const xTicks = getXTicks(glucoseData, period.hours);
+
+  // Auto-scale Y axis to data range (matching platform behavior)
+  const allValues = glucoseData.map((d) => d.value);
+  const dataMin = Math.min(...allValues);
+  const dataMax = Math.max(...allValues);
+  const yMin = Math.max(40, Math.floor((dataMin - 20) / 10) * 10);
+  const yMax = Math.min(400, Math.ceil((dataMax + 20) / 10) * 10);
+
+  // Generate Y axis ticks that include the range boundaries
+  const yTicks: number[] = [];
+  const yStep = yMax - yMin > 200 ? 70 : 50;
+  for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) {
+    yTicks.push(y);
+  }
 
   return (
     <AnimatedSection className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
@@ -232,12 +208,7 @@ export function GlucoseChartSection() {
             </div>
             <div className="border-r border-border pr-6 sm:pr-10">
               <div className="font-medium text-muted-foreground">BASAL</div>
-              <div className="font-semibold">
-                {basalData.length > 0
-                  ? basalData[basalData.length - 1].rate
-                  : 0}{" "}
-                u/hr
-              </div>
+              <div className="font-semibold">4.37 u/hr</div>
             </div>
             <div className="border-r border-border pr-6 sm:pr-10">
               <div className="font-medium text-muted-foreground">BATTERY</div>
@@ -255,15 +226,15 @@ export function GlucoseChartSection() {
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">Glucose Trend</span>
             <span className="text-xs text-muted-foreground">
-              Hover to explore
+              Drag chart to zoom
             </span>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             {PERIODS.map((p, i) => (
               <button
                 key={p.label}
                 onClick={() => setPeriodIdx(i)}
-                className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   i === periodIdx
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-accent"
@@ -275,43 +246,38 @@ export function GlucoseChartSection() {
           </div>
         </div>
 
-        {/* Chart */}
+        {/* Chart -- matches platform: scatter dots only, no basal/bolus overlay */}
         <div className="h-64 w-full sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              margin={{ top: 10, right: 30, left: -15, bottom: 0 }}
+              margin={{ top: 10, right: 5, left: -15, bottom: 0 }}
             >
+              {/* Target range shading */}
               <ReferenceArea
-                yAxisId="glucose"
                 y1={70}
                 y2={180}
                 fill="#22C55E"
                 fillOpacity={0.06}
               />
+
+              {/* Dotted grid lines matching platform */}
               <ReferenceLine
-                yAxisId="glucose"
-                y={250}
+                y={yMax}
                 stroke="currentColor"
-                strokeDasharray="3 3"
+                strokeDasharray="3 6"
                 strokeWidth={0.5}
-                strokeOpacity={0.2}
+                strokeOpacity={0.15}
               />
-              <ReferenceLine
-                yAxisId="glucose"
-                y={180}
-                stroke="currentColor"
-                strokeDasharray="3 3"
-                strokeWidth={0.5}
-                strokeOpacity={0.2}
-              />
-              <ReferenceLine
-                yAxisId="glucose"
-                y={70}
-                stroke="currentColor"
-                strokeDasharray="3 3"
-                strokeWidth={0.5}
-                strokeOpacity={0.2}
-              />
+              {yTicks.map((y) => (
+                <ReferenceLine
+                  key={y}
+                  y={y}
+                  stroke="currentColor"
+                  strokeDasharray="3 6"
+                  strokeWidth={0.5}
+                  strokeOpacity={0.15}
+                />
+              ))}
 
               <XAxis
                 dataKey="timestamp"
@@ -319,112 +285,49 @@ export function GlucoseChartSection() {
                 domain={["dataMin", "dataMax"]}
                 ticks={xTicks}
                 tickFormatter={(ts: number) => formatXTick(ts, period.hours)}
-                tick={{ fontSize: 10 }}
+                tick={{ fontSize: 11 }}
                 className="fill-muted-foreground"
                 axisLine={false}
                 tickLine={false}
                 allowDuplicatedCategory={false}
               />
               <YAxis
-                yAxisId="glucose"
-                domain={[40, 300]}
-                ticks={[70, 120, 180, 250]}
-                tick={{ fontSize: 10 }}
+                domain={[yMin, yMax]}
+                ticks={yTicks}
+                tick={{ fontSize: 11 }}
                 className="fill-muted-foreground"
                 axisLine={false}
                 tickLine={false}
               />
-              <YAxis
-                yAxisId="basal"
-                orientation="right"
-                domain={[0, 3]}
-                ticks={[0.5, 1.0, 1.5]}
-                tick={{ fontSize: 9 }}
-                className="fill-muted-foreground"
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => `${v}u`}
-              />
-              <ZAxis range={[20, 20]} />
+              {/* Larger dots to match platform density */}
+              <ZAxis range={[35, 35]} />
               <Tooltip content={<CustomTooltip />} cursor={false} />
 
-              {/* Basal rate step line */}
-              <Line
-                yAxisId="basal"
-                data={basalData}
-                dataKey="rate"
-                type="stepAfter"
-                stroke="#6366F1"
-                strokeWidth={1.5}
-                strokeOpacity={0.5}
-                dot={false}
-                activeDot={false}
-              />
-
-              {/* Glucose scatter dots */}
+              {/* Glucose scatter dots -- same 3 categories as the platform */}
               <Scatter
-                yAxisId="glucose"
                 data={inRange}
                 dataKey="value"
                 fill="#22C55E"
                 name="In Range"
               />
               <Scatter
-                yAxisId="glucose"
                 data={highLow}
                 dataKey="value"
                 fill="#F59E0B"
                 name="High/Low"
               />
               <Scatter
-                yAxisId="glucose"
                 data={urgent}
                 dataKey="value"
                 fill="#EF4444"
                 name="Urgent"
               />
-
-              {/* Bolus markers */}
-              <Scatter
-                yAxisId="glucose"
-                data={bolusPoints}
-                dataKey="plotY"
-                fill="#8B5CF6"
-                name="Bolus"
-                shape={(props: {
-                  cx?: number;
-                  cy?: number;
-                  payload?: BolusEvent & { plotY: number };
-                }) => {
-                  if (!props.cx || !props.cy || !props.payload) return null;
-                  const isMeal = props.payload.type === "meal";
-                  return (
-                    <g>
-                      <polygon
-                        points={`${props.cx},${props.cy - 8} ${props.cx - 5},${props.cy + 2} ${props.cx + 5},${props.cy + 2}`}
-                        fill={isMeal ? "#8B5CF6" : "#EC4899"}
-                        opacity={0.8}
-                      />
-                      <text
-                        x={props.cx}
-                        y={props.cy + 14}
-                        textAnchor="middle"
-                        fill="currentColor"
-                        className="fill-muted-foreground"
-                        style={{ fontSize: "8px" }}
-                      >
-                        {props.payload.units}u
-                      </text>
-                    </g>
-                  );
-                }}
-              />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Legend */}
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+        {/* Legend -- matches platform: 3 items only */}
+        <div className="mt-3 flex items-center justify-center gap-6 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#22C55E]" />
             70-180 Target
@@ -436,18 +339,6 @@ export function GlucoseChartSection() {
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#EF4444]" />
             Urgent
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-1 w-4 bg-[#6366F1] opacity-50" />
-            Basal Rate
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-0 w-0 border-l-[5px] border-r-[5px] border-b-[7px] border-l-transparent border-r-transparent border-b-[#8B5CF6]" />
-            Meal Bolus
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-0 w-0 border-l-[5px] border-r-[5px] border-b-[7px] border-l-transparent border-r-transparent border-b-[#EC4899]" />
-            Correction
           </span>
         </div>
       </div>
