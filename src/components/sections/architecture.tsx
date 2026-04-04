@@ -8,16 +8,20 @@ import {
   Server,
   Monitor,
   Brain,
+  Database,
 } from "lucide-react";
 
 const mainFlow = [
-  { id: "pump", label: "Insulin Pump", sublabel: "BLE", icon: Bluetooth },
+  { id: "devices", label: "Your Devices", sublabel: "Pump + CGM", icon: Bluetooth },
   { id: "mobile", label: "Mobile App", sublabel: "Android + Wear OS", icon: Smartphone },
-  { id: "backend", label: "Backend API", sublabel: "FastAPI + PostgreSQL", icon: Server },
-  { id: "web", label: "Web Dashboard", sublabel: "Next.js + SSE", icon: Monitor },
+  { id: "backend", label: "Platform Core", sublabel: "API + AI + RAG", icon: Server },
+  { id: "web", label: "Web Dashboard", sublabel: "Real-Time Monitoring", icon: Monitor },
 ];
 
-const sidecar = { id: "ai", label: "AI Sidecar", sublabel: "5 Provider Types", icon: Brain };
+const auxNodes = [
+  { id: "ai", label: "AI Engine", sublabel: "Analysis + Knowledge Base", icon: Brain },
+  { id: "db", label: "Data Store", sublabel: "History + Vector Search", icon: Database },
+];
 
 function ConnectorArrow({ vertical = false }: { vertical?: boolean }) {
   return (
@@ -28,7 +32,6 @@ function ConnectorArrow({ vertical = false }: { vertical?: boolean }) {
             vertical ? "h-10 w-px" : "h-px w-8 sm:w-12"
           } bg-border`}
         />
-        {/* Arrow head */}
         <div
           className={`absolute ${
             vertical
@@ -36,7 +39,6 @@ function ConnectorArrow({ vertical = false }: { vertical?: boolean }) {
               : "-right-1 top-1/2 -translate-y-1/2 border-t-[4px] border-b-[4px] border-l-[5px] border-t-transparent border-b-transparent border-l-border"
           }`}
         />
-        {/* Animated dot - CSS animation for perfectly synced, smooth looping */}
         <div
           className={`absolute rounded-full bg-primary ${
             vertical
@@ -55,20 +57,23 @@ interface NodeCardProps {
   icon: React.ComponentType<{ className?: string }>;
   index: number;
   prefersReducedMotion: boolean | null;
+  small?: boolean;
 }
 
-function NodeCard({ label, sublabel, icon: Icon, index, prefersReducedMotion }: NodeCardProps) {
+function NodeCard({ label, sublabel, icon: Icon, index, prefersReducedMotion, small }: NodeCardProps) {
   return (
     <motion.div
-      className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-4 py-5 text-center min-w-[140px] sm:min-w-[160px]"
+      className={`flex flex-col items-center gap-2 rounded-xl border border-border bg-card text-center ${
+        small ? "px-3 py-3 min-w-[130px]" : "px-4 py-5 min-w-[140px] sm:min-w-[160px]"
+      }`}
       initial={prefersReducedMotion ? {} : { opacity: 0, y: 15 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.1, duration: 0.4 }}
     >
-      <Icon className="h-5 w-5 text-primary" />
-      <div className="text-sm font-semibold">{label}</div>
-      <div className="text-xs text-muted-foreground">{sublabel}</div>
+      <Icon className={`text-primary ${small ? "h-4 w-4" : "h-5 w-5"}`} />
+      <div className={`font-semibold ${small ? "text-xs" : "text-sm"}`}>{label}</div>
+      <div className={`text-muted-foreground ${small ? "text-[10px]" : "text-xs"}`}>{sublabel}</div>
     </motion.div>
   );
 }
@@ -83,34 +88,31 @@ export function ArchitectureSection() {
           Platform Architecture
         </h2>
         <p className="mx-auto max-w-2xl text-muted-foreground">
-          From pump to dashboard in real time. Every component self-hosted on
-          your infrastructure.
+          From device to dashboard in real time. AI analysis and clinical
+          knowledge retrieval built directly into the platform core.
         </p>
       </div>
 
-      {/* Desktop: two-row layout */}
+      {/* Desktop layout */}
       <div className="hidden md:flex flex-col items-center gap-0">
-        {/* Row 1: AI Sidecar + vertical connector, aligned above Backend (3rd of 4 nodes) */}
-        {/* Offset: each node ~160px + each connector ~48px = ~208px per slot.
-            Backend is at index 2 = offset 2 slots from left edge of the flow.
-            Total flow width = 4*160 + 3*48 = 784px. Center of Backend = 2*208 + 80 = 496px from left.
-            Center of flow = 392px. So sidecar needs to shift right by 496-392 = 104px from center. */}
-        <div className="flex flex-col items-center" style={{ transform: "translateX(104px)" }}>
-          <motion.div
-            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-4 py-5 text-center min-w-[160px]"
-            initial={prefersReducedMotion ? {} : { opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5, duration: 0.4 }}
-          >
-            <sidecar.icon className="h-5 w-5 text-primary" />
-            <div className="text-sm font-semibold">{sidecar.label}</div>
-            <div className="text-xs text-muted-foreground">{sidecar.sublabel}</div>
-          </motion.div>
-          <ConnectorArrow vertical />
+        {/* Top row: AI Engine + Data Store above Platform Core */}
+        <div className="flex items-end justify-center gap-6 mb-0">
+          {auxNodes.map((node, i) => (
+            <div key={node.id} className="flex flex-col items-center">
+              <NodeCard
+                label={node.label}
+                sublabel={node.sublabel}
+                icon={node.icon}
+                index={i + 4}
+                prefersReducedMotion={prefersReducedMotion}
+                small
+              />
+              <ConnectorArrow vertical />
+            </div>
+          ))}
         </div>
 
-        {/* Row 2: Main horizontal flow */}
+        {/* Main horizontal flow */}
         <div className="flex items-center justify-center">
           {mainFlow.map((node, i) => (
             <div key={node.id} className="flex items-center">
@@ -139,15 +141,19 @@ export function ArchitectureSection() {
               prefersReducedMotion={prefersReducedMotion}
             />
             {i < mainFlow.length - 1 && <ConnectorArrow vertical />}
-            {/* Show AI Sidecar branching off Backend on mobile */}
+            {/* Show AI + Data Store branching off Platform Core on mobile */}
             {node.id === "backend" && (
-              <div className="my-2 flex items-center gap-2">
-                <div className="h-px w-8 bg-border" />
-                <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-4 py-4 text-center">
-                  <sidecar.icon className="h-5 w-5 text-primary" />
-                  <div className="text-xs font-semibold">{sidecar.label}</div>
-                  <div className="text-[10px] text-muted-foreground">{sidecar.sublabel}</div>
-                </div>
+              <div className="my-3 flex items-center gap-3">
+                {auxNodes.map((aux) => (
+                  <div key={aux.id} className="flex items-center gap-2">
+                    <div className="h-px w-4 bg-border" />
+                    <div className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-3 text-center">
+                      <aux.icon className="h-4 w-4 text-primary" />
+                      <div className="text-xs font-semibold">{aux.label}</div>
+                      <div className="text-[10px] text-muted-foreground">{aux.sublabel}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
