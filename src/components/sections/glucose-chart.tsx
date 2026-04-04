@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { AnimatedSection } from "@/components/animated-section";
 import {
@@ -225,7 +224,8 @@ function formatXTick(ts: number, periodHours: number): string {
 // --- Main component ---
 
 export function GlucoseChartSection() {
-  const [periodIdx, setPeriodIdx] = useState(3); // default 24H
+  // Demo locked to 24H -- other buttons shown for feature showcase only
+  const periodIdx = 3; // 24H
   const period = PERIODS[periodIdx];
 
   const multiDay = isMultiDay(period.hours);
@@ -233,10 +233,7 @@ export function GlucoseChartSection() {
   // LTTB downsample for longer periods (matches platform MAX_CHART_POINTS=500)
   const glucoseData = lttbDownsample(rawGlucose, MAX_CHART_POINTS);
   const bolusData = filterByPeriod(allBolusData, period.hours);
-  const basalSegments = useMemo(
-    () => filterByPeriod(allBasalData, period.hours),
-    [period.hours]
-  );
+  const basalSegments = filterByPeriod(allBasalData, period.hours);
 
   // Dot size: r=4 for intraday, r=2 for multi-day (matches platform)
   const dotSize = multiDay ? 12 : 35;
@@ -267,17 +264,14 @@ export function GlucoseChartSection() {
   }));
 
   // Insulin Y domain -- scale so basal occupies ~25% of chart height
-  const insulinDomain = useMemo(() => {
-    if (basalSegments.length === 0) return [0, 3];
-    const maxRate = basalSegments.reduce((m, b) => Math.max(m, b.rate), 0);
-    return [0, maxRate * 4];
-  }, [basalSegments]);
+  const maxRate = basalSegments.length > 0
+    ? basalSegments.reduce((m, b) => Math.max(m, b.rate), 0)
+    : 1.5;
+  const insulinDomain = [0, maxRate * 4];
 
   // Bolus scatter data positioned near chart top
-  const bolusScatterData = useMemo(() => {
-    const bolusY = yMax - (yMax - yMin) * 0.05;
-    return bolusData.map((b) => ({ ...b, value: bolusY }));
-  }, [bolusData, yMin, yMax]);
+  const bolusY = yMax - (yMax - yMin) * 0.05;
+  const bolusScatterData = bolusData.map((b) => ({ ...b, value: bolusY }));
 
   return (
     <AnimatedSection className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
@@ -339,15 +333,14 @@ export function GlucoseChartSection() {
           </div>
           <div className="flex gap-0.5">
             {PERIODS.map((p, i) => (
-              <button
+              <span
                 key={p.label}
-                onClick={() => setPeriodIdx(i)}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                  i === periodIdx ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+                className={`rounded-md px-2.5 py-1 text-xs font-medium ${
+                  i === periodIdx ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
                 {p.label}
-              </button>
+              </span>
             ))}
           </div>
         </div>
