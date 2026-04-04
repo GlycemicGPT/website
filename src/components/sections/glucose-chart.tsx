@@ -14,9 +14,14 @@ import {
   formatDate,
   formatDateTime,
   PERIODS,
+  isMultiDay,
+  lttbDownsample,
   type GlucoseReading,
   type BolusEvent,
 } from "@/lib/sample-data";
+
+// Max visual points for chart rendering (matches platform)
+const MAX_CHART_POINTS = 500;
 import { ArrowRight } from "lucide-react";
 
 const ComposedChart = dynamic(
@@ -207,12 +212,18 @@ export function GlucoseChartSection() {
   const [periodIdx, setPeriodIdx] = useState(3); // default 24H
   const period = PERIODS[periodIdx];
 
-  const glucoseData = filterByPeriod(allGlucoseData, period.hours);
+  const multiDay = isMultiDay(period.hours);
+  const rawGlucose = filterByPeriod(allGlucoseData, period.hours);
+  // LTTB downsample for longer periods (matches platform MAX_CHART_POINTS=500)
+  const glucoseData = lttbDownsample(rawGlucose, MAX_CHART_POINTS);
   const bolusData = filterByPeriod(allBolusData, period.hours);
   const basalSegments = useMemo(
     () => filterByPeriod(allBasalData, period.hours),
     [period.hours]
   );
+
+  // Dot size: r=4 for intraday, r=2 for multi-day (matches platform)
+  const dotSize = multiDay ? 12 : 35;
 
   const inRange = glucoseData.filter((d) => d.value >= 70 && d.value <= 180);
   const highLow = glucoseData.filter(
@@ -385,7 +396,8 @@ export function GlucoseChartSection() {
                 tickLine={false}
                 tickFormatter={(v: number) => `${v}u`}
               />
-              <ZAxis range={[35, 35]} />
+              {/* Dot size: smaller for multi-day views (matches platform) */}
+              <ZAxis range={[dotSize, dotSize]} />
               <Tooltip content={<CustomTooltip />} cursor={false} />
 
               {/* Glucose scatter dots */}

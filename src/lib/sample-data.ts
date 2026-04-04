@@ -14,8 +14,8 @@ export interface BolusEvent {
   type: "meal" | "correction";
 }
 
-// Generate 7 days of realistic CGM data ending ~now
-const DAYS = 7;
+// Generate 30 days of realistic CGM data ending ~now
+const DAYS = 30;
 const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const NOW = Date.now();
 const START = NOW - DAYS * 24 * 60 * 60 * 1000;
@@ -216,7 +216,7 @@ export function formatDateTime(ts: number): string {
   return `${formatDate(ts)} ${formatTime(ts)}`;
 }
 
-/** Period definitions for the time selector buttons. */
+/** Period definitions matching the platform's chart-periods.ts */
 export const PERIODS = [
   { label: "3H", hours: 3 },
   { label: "6H", hours: 6 },
@@ -224,4 +224,70 @@ export const PERIODS = [
   { label: "24H", hours: 24 },
   { label: "3D", hours: 72 },
   { label: "7D", hours: 168 },
+  { label: "14D", hours: 336 },
+  { label: "30D", hours: 720 },
 ] as const;
+
+/** Returns true for multi-day periods (>= 3D) -- used for dot sizing */
+export function isMultiDay(hours: number): boolean {
+  return hours >= 72;
+}
+
+/**
+ * LTTB (Largest Triangle Three Buckets) downsampling.
+ * Preserves visual shape while reducing point count.
+ * Matches the platform's downsample implementation.
+ */
+export function lttbDownsample<T extends { timestamp: number; value: number }>(
+  data: T[],
+  targetPoints: number
+): T[] {
+  if (data.length <= targetPoints) return data;
+
+  const result: T[] = [data[0]]; // always keep first
+  const bucketSize = (data.length - 2) / (targetPoints - 2);
+
+  let prevIndex = 0;
+
+  for (let i = 1; i < targetPoints - 1; i++) {
+    const rangeStart = Math.floor((i - 1) * bucketSize) + 1;
+    const rangeEnd = Math.min(Math.floor(i * bucketSize) + 1, data.length - 1);
+
+    // Average of next bucket for area calculation
+    const nextStart = Math.floor(i * bucketSize) + 1;
+    const nextEnd = Math.min(Math.floor((i + 1) * bucketSize) + 1, data.length - 1);
+    let avgX = 0;
+    let avgY = 0;
+    let count = 0;
+    for (let j = nextStart; j < nextEnd; j++) {
+      avgX += data[j].timestamp;
+      avgY += data[j].value;
+      count++;
+    }
+    if (count > 0) {
+      avgX /= count;
+      avgY /= count;
+    }
+
+    // Find point in current bucket that forms largest triangle
+    let maxArea = -1;
+    let maxIndex = rangeStart;
+    const prev = data[prevIndex];
+    for (let j = rangeStart; j < rangeEnd; j++) {
+      const area = Math.abs(
+        (prev.timestamp - avgX) * (data[j].value - prev.value) -
+        (prev.timestamp - data[j].timestamp) * (avgY - prev.value)
+      );
+      if (area > maxArea) {
+        maxArea = area;
+        maxIndex = j;
+      }
+    }
+
+    result.push(data[maxIndex]);
+    prevIndex = maxIndex;
+  }
+
+  result.push(data[data.length - 1]); // always keep last
+  return result;
+}
