@@ -9,6 +9,10 @@ import {
   Monitor,
   Brain,
   Database,
+  HelpCircle,
+  Droplets,
+  FileText,
+  Lightbulb,
 } from "lucide-react";
 
 const mainFlow = [
@@ -91,17 +95,19 @@ function AIEngineModule({ prefersReducedMotion }: { prefersReducedMotion: boolea
           <div className="text-[10px] text-muted-foreground">5 Provider Types</div>
         </div>
 
-        {/* Bidirectional connector: two parallel lines with dots flowing opposite directions */}
-        <div className="flex flex-col items-center justify-center gap-1.5 px-1">
-          {/* Line 1: Analysis → Knowledge Base */}
-          <div className="relative overflow-hidden">
-            <div className="h-px w-10 bg-border" />
-            <div className="absolute top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary animate-dot-horizontal" />
+        {/* Bidirectional connector: two lines with data-type icons flowing each direction */}
+        <div className="flex flex-col items-center justify-center gap-2.5 px-2">
+          {/* Line 1: Analysis → Knowledge Base (queries + health context) */}
+          <div className="relative h-4 w-20 overflow-hidden">
+            <div className="absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 bg-border" />
+            <HelpCircle className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-primary animate-icon-right" style={{ animationDelay: "0s" }} />
+            <Droplets className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-red-400 animate-icon-right" style={{ animationDelay: "1.5s" }} />
           </div>
-          {/* Line 2: Knowledge Base → Analysis */}
-          <div className="relative overflow-hidden">
-            <div className="h-px w-10 bg-border" />
-            <div className="absolute top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary animate-dot-horizontal-reverse" />
+          {/* Line 2: Knowledge Base → Analysis (docs + insights) */}
+          <div className="relative h-4 w-20 overflow-hidden">
+            <div className="absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 bg-border" />
+            <FileText className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-primary animate-icon-left" style={{ animationDelay: "0.5s" }} />
+            <Lightbulb className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-amber-400 animate-icon-left" style={{ animationDelay: "2s" }} />
           </div>
         </div>
 
