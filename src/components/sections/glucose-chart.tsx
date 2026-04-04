@@ -55,6 +55,10 @@ const ZAxis = dynamic(
   () => import("recharts").then((m) => m.ZAxis),
   { ssr: false }
 );
+const Area = dynamic(
+  () => import("recharts").then((m) => m.Area),
+  { ssr: false }
+);
 
 // --- Tooltip ---
 
@@ -229,7 +233,13 @@ export function GlucoseChartSection() {
   const yStep = yMax - yMin > 200 ? 70 : 50;
   for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) yTicks.push(y);
 
-  // Insulin Y domain (hidden axis, basal area occupies bottom ~25%)
+  // Build basal step data sampled at glucose timestamps for Area chart
+  const basalLineData = glucoseData.map((g) => ({
+    timestamp: g.timestamp,
+    rate: getBasalAt(g.timestamp),
+  }));
+
+  // Insulin Y domain -- scale so basal occupies ~25% of chart height
   const insulinDomain = useMemo(() => {
     if (basalSegments.length === 0) return [0, 3];
     const maxRate = basalSegments.reduce((m, b) => Math.max(m, b.rate), 0);
@@ -241,11 +251,6 @@ export function GlucoseChartSection() {
     const bolusY = yMax - (yMax - yMin) * 0.05;
     return bolusData.map((b) => ({ ...b, value: bolusY }));
   }, [bolusData, yMin, yMax]);
-
-  // X domain
-  const xDomain = glucoseData.length > 0
-    ? [glucoseData[0].timestamp, glucoseData[glucoseData.length - 1].timestamp]
-    : [0, 1];
 
   return (
     <AnimatedSection className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
@@ -323,7 +328,7 @@ export function GlucoseChartSection() {
         {/* Chart */}
         <div className="h-64 w-full sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart margin={{ top: 10, right: 5, left: -15, bottom: 0 }}>
+            <ComposedChart margin={{ top: 10, right: 30, left: -15, bottom: 0 }}>
               {/* Target range shading */}
               <ReferenceArea yAxisId="glucose" y1={70} y2={180} fill="#22C55E" fillOpacity={0.06} />
 
@@ -332,25 +337,21 @@ export function GlucoseChartSection() {
                 <ReferenceLine key={y} yAxisId="glucose" y={y} stroke="currentColor" strokeDasharray="3 6" strokeWidth={0.5} strokeOpacity={0.15} />
               ))}
 
-              {/* Basal rate area segments -- filled rectangles at bottom, matching platform */}
-              {basalSegments.map((b, i) => {
-                const nextTs = i + 1 < basalSegments.length ? basalSegments[i + 1].timestamp : xDomain[1];
-                return (
-                  <ReferenceArea
-                    key={`basal-${b.timestamp}`}
-                    yAxisId="insulin"
-                    x1={Math.max(b.timestamp, xDomain[0])}
-                    x2={Math.min(nextTs, xDomain[1])}
-                    y1={0}
-                    y2={b.rate}
-                    fill="#3b82f6"
-                    fillOpacity={0.15}
-                    stroke="#3b82f6"
-                    strokeOpacity={0.6}
-                    strokeWidth={1}
-                  />
-                );
-              })}
+              {/* Basal rate filled area at chart bottom */}
+              <Area
+                yAxisId="insulin"
+                data={basalLineData}
+                dataKey="rate"
+                type="stepAfter"
+                fill="#3b82f6"
+                fillOpacity={0.15}
+                stroke="#3b82f6"
+                strokeOpacity={0.6}
+                strokeWidth={1}
+                dot={false}
+                activeDot={false}
+                isAnimationActive={false}
+              />
 
               <XAxis
                 dataKey="timestamp"
@@ -377,7 +378,12 @@ export function GlucoseChartSection() {
                 yAxisId="insulin"
                 orientation="right"
                 domain={insulinDomain}
-                hide
+                ticks={[0.5, 1.0, 1.5]}
+                tick={{ fontSize: 9 }}
+                className="fill-muted-foreground"
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `${v}u`}
               />
               <ZAxis range={[35, 35]} />
               <Tooltip content={<CustomTooltip />} cursor={false} />
