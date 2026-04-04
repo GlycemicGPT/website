@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "GlycemicGPT - Open Source Diabetes Management Platform",
   description:
-    "Built by patients who got tired of waiting. Real-time glucose monitoring, AI-powered analysis, caregiver alerts, and Wear OS support. Self-hosted, privacy-first, open source.",
+    "Because no one should manage diabetes alone. Real-time glucose monitoring, AI-powered analysis, caregiver alerts, and Wear OS support. Self-hosted, privacy-first, open source.",
   openGraph: {
     title: "GlycemicGPT - Open Source Diabetes Management Platform",
     description:
-      "Built by patients who got tired of waiting. Real-time glucose monitoring, AI-powered analysis, caregiver alerts, and Wear OS support.",
+      "Because no one should manage diabetes alone. Real-time glucose monitoring, AI-powered analysis, caregiver alerts, and Wear OS support.",
     url: "https://glycemicgpt.org",
     siteName: "GlycemicGPT",
     type: "website",

@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { GitHubIcon } from "@/components/icons";
 
-const words = "Built by patients who got tired of waiting.".split(" ");
+const words = "Because no one should manage diabetes alone.".split(" ");
 
 export function HeroSection() {
   const prefersReducedMotion = useReducedMotion();

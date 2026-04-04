@@ -9,7 +9,7 @@ export function Footer() {
           <div className="space-y-3">
             <h3 className="text-lg font-bold">GlycemicGPT</h3>
             <p className="text-sm text-muted-foreground">
-              Built by patients who got tired of waiting.
+              Because no one should manage diabetes alone.
             </p>
           </div>
 
