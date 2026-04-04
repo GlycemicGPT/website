@@ -19,10 +19,10 @@ const mainFlow = [
 
 const sidecar = { id: "ai", label: "AI Sidecar", sublabel: "5 Provider Types", icon: Brain };
 
-function ConnectorArrow({ vertical = false, delay = 0 }: { vertical?: boolean; delay?: number }) {
+function ConnectorArrow({ vertical = false }: { vertical?: boolean }) {
   return (
     <div className={`flex items-center justify-center ${vertical ? "py-1" : "px-1"}`}>
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <div
           className={`${
             vertical ? "h-10 w-px" : "h-px w-8 sm:w-12"
@@ -36,25 +36,13 @@ function ConnectorArrow({ vertical = false, delay = 0 }: { vertical?: boolean; d
               : "-right-1 top-1/2 -translate-y-1/2 border-t-[4px] border-b-[4px] border-l-[5px] border-t-transparent border-b-transparent border-l-border"
           }`}
         />
-        {/* Animated dot - fades in at start, fades out at end for seamless loop */}
-        <motion.div
-          className={`absolute ${
+        {/* Animated dot - CSS animation for perfectly synced, smooth looping */}
+        <div
+          className={`absolute rounded-full bg-primary ${
             vertical
-              ? "left-1/2 -translate-x-1/2 h-1.5 w-1.5"
-              : "top-1/2 -translate-y-1/2 h-1.5 w-1.5"
-          } rounded-full bg-primary`}
-          animate={
-            vertical
-              ? { top: ["-5%", "105%"], opacity: [0, 1, 1, 0] }
-              : { left: ["-5%", "105%"], opacity: [0, 1, 1, 0] }
-          }
-          transition={{
-            duration: 2.5,
-            delay,
-            repeat: Infinity,
-            ease: "linear",
-            times: [0, 0.1, 0.9, 1],
-          }}
+              ? "left-1/2 -translate-x-1/2 h-1.5 w-1.5 animate-dot-vertical"
+              : "top-1/2 -translate-y-1/2 h-1.5 w-1.5 animate-dot-horizontal"
+          }`}
         />
       </div>
     </div>
@@ -119,7 +107,7 @@ export function ArchitectureSection() {
             <div className="text-sm font-semibold">{sidecar.label}</div>
             <div className="text-xs text-muted-foreground">{sidecar.sublabel}</div>
           </motion.div>
-          <ConnectorArrow vertical delay={0.8} />
+          <ConnectorArrow vertical />
         </div>
 
         {/* Row 2: Main horizontal flow */}
@@ -133,7 +121,7 @@ export function ArchitectureSection() {
                 index={i}
                 prefersReducedMotion={prefersReducedMotion}
               />
-              {i < mainFlow.length - 1 && <ConnectorArrow delay={i * 0.6} />}
+              {i < mainFlow.length - 1 && <ConnectorArrow />}
             </div>
           ))}
         </div>
@@ -150,7 +138,7 @@ export function ArchitectureSection() {
               index={i}
               prefersReducedMotion={prefersReducedMotion}
             />
-            {i < mainFlow.length - 1 && <ConnectorArrow vertical delay={i * 0.5} />}
+            {i < mainFlow.length - 1 && <ConnectorArrow vertical />}
             {/* Show AI Sidecar branching off Backend on mobile */}
             {node.id === "backend" && (
               <div className="my-2 flex items-center gap-2">

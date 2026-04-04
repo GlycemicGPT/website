@@ -128,3 +128,31 @@
     @apply font-sans;
   }
 }
+
+/* Architecture diagram dot animations — CSS ensures perfect sync across all connectors */
+@keyframes dot-horizontal {
+  0% { left: -5%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: 105%; opacity: 0; }
+}
+@keyframes dot-vertical {
+  0% { top: -5%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 105%; opacity: 0; }
+}
+.animate-dot-horizontal {
+  animation: dot-horizontal 2.5s linear infinite;
+}
+.animate-dot-vertical {
+  animation: dot-vertical 2.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-dot-horizontal,
+  .animate-dot-vertical {
+    animation: none;
+    opacity: 0;
+  }
+}
