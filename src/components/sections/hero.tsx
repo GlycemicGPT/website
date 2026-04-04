@@ -12,9 +12,10 @@ export function HeroSection() {
   return (
     <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden px-4 pt-16">
       {/* Gradient background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute left-1/4 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute right-1/4 bottom-1/4 h-96 w-96 rounded-full bg-primary/3 blur-3xl" />
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute -left-20 top-1/4 h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute right-0 top-1/3 h-[400px] w-[400px] rounded-full bg-green-500/8 blur-3xl" />
+        <div className="absolute left-1/3 bottom-0 h-[300px] w-[300px] rounded-full bg-primary/6 blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-4xl text-center">
