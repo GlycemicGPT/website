@@ -1,17 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { AnimatedSection } from "@/components/animated-section";
 import {
   allGlucoseData,
+  allBolusData,
+  allBasalData,
   filterByPeriod,
+  getBasalAt,
   getRangeColor,
   formatTime,
   formatDate,
   formatDateTime,
   PERIODS,
   type GlucoseReading,
+  type BolusEvent,
 } from "@/lib/sample-data";
 import { ArrowRight } from "lucide-react";
 
@@ -52,8 +56,16 @@ const ZAxis = dynamic(
   { ssr: false }
 );
 
+// --- Tooltip ---
+
 interface TooltipPayloadItem {
-  payload: { timestamp: number; value?: number };
+  payload: {
+    timestamp: number;
+    value?: number;
+    units?: number;
+    isAutomated?: boolean;
+    rate?: number;
+  };
   dataKey: string;
 }
 
@@ -67,60 +79,115 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
   const data = payload[0].payload;
-  const value = data.value ?? 0;
 
+  // Bolus tooltip
+  if (data.units != null) {
+    const isAuto = data.isAutomated;
+    const color = isAuto ? "#3b82f6" : "#8b5cf6";
+    return (
+      <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
+        <div className="text-sm font-bold" style={{ color }}>
+          {data.units}u {isAuto ? "Auto Correction" : "Manual Bolus"}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {formatDateTime(data.timestamp)}
+        </div>
+      </div>
+    );
+  }
+
+  // Glucose tooltip
+  const value = data.value ?? 0;
+  const basal = getBasalAt(data.timestamp);
   const idx = allGlucoseData.findIndex((d) => d.timestamp === data.timestamp);
   const prev = idx > 3 ? allGlucoseData[idx - 3].value : value;
   const diff = value - prev;
   let trend = "Stable";
   let trendArrow = "\u2192";
-  if (diff > 10) {
-    trend = "Rising";
-    trendArrow = "\u2197";
-  } else if (diff > 3) {
-    trend = "Rising slowly";
-    trendArrow = "\u2197";
-  } else if (diff < -10) {
-    trend = "Falling";
-    trendArrow = "\u2198";
-  } else if (diff < -3) {
-    trend = "Falling slowly";
-    trendArrow = "\u2198";
-  }
+  if (diff > 10) { trend = "Rising"; trendArrow = "\u2197"; }
+  else if (diff > 3) { trend = "Rising slowly"; trendArrow = "\u2197"; }
+  else if (diff < -10) { trend = "Falling"; trendArrow = "\u2198"; }
+  else if (diff < -3) { trend = "Falling slowly"; trendArrow = "\u2198"; }
 
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
-      <div
-        className="text-lg font-bold"
-        style={{ color: getRangeColor(value) }}
-      >
+      <div className="text-lg font-bold" style={{ color: getRangeColor(value) }}>
         {value} mg/dL {trendArrow}
       </div>
       <div className="text-xs text-muted-foreground">{trend}</div>
-      <div className="text-xs text-muted-foreground">
-        {formatDateTime(data.timestamp)}
+      <div className="text-xs text-muted-foreground">{formatDateTime(data.timestamp)}</div>
+      <div className="mt-1 border-t border-border pt-1 text-xs text-muted-foreground">
+        Basal: {basal} u/hr
       </div>
     </div>
   );
 }
+
+// --- Bolus marker shape (matches platform exactly) ---
+// Auto corrections = blue diamond, Manual boluses = purple circle
+
+function renderBolusMarker(props: {
+  cx?: number;
+  cy?: number;
+  payload?: Record<string, unknown>;
+}) {
+  const { cx, cy, payload } = props;
+  if (cx == null || cy == null || !payload) return <g />;
+  const p = payload as unknown as BolusEvent & { value: number };
+  const isAuto = p.type === "correction";
+  const color = isAuto ? "#3b82f6" : "#8b5cf6";
+  const r = 5;
+  return (
+    <g>
+      {isAuto ? (
+        <polygon
+          points={`${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}`}
+          fill={color}
+          opacity={0.9}
+        />
+      ) : (
+        <circle cx={cx} cy={cy} r={r} fill={color} opacity={0.9} />
+      )}
+      <text
+        x={cx}
+        y={cy - r - 3}
+        textAnchor="middle"
+        fill={color}
+        fontSize={9}
+        fontWeight={600}
+      >
+        {p.units.toFixed(1)}u
+      </text>
+      {isAuto && (
+        <text
+          x={cx}
+          y={cy - r - 13}
+          textAnchor="middle"
+          fill={color}
+          fontSize={7}
+          opacity={0.8}
+        >
+          AUTO
+        </text>
+      )}
+    </g>
+  );
+}
+
+// --- Helpers ---
 
 function getXTicks(data: GlucoseReading[], periodHours: number): number[] {
   if (data.length === 0) return [];
   const first = data[0].timestamp;
   const last = data[data.length - 1].timestamp;
   const ticks: number[] = [];
-
   let intervalMs: number;
   if (periodHours <= 6) intervalMs = 60 * 60 * 1000;
   else if (periodHours <= 24) intervalMs = 3 * 60 * 60 * 1000;
   else if (periodHours <= 72) intervalMs = 12 * 60 * 60 * 1000;
   else intervalMs = 24 * 60 * 60 * 1000;
-
   let t = Math.ceil(first / intervalMs) * intervalMs;
-  while (t <= last) {
-    ticks.push(t);
-    t += intervalMs;
-  }
+  while (t <= last) { ticks.push(t); t += intervalMs; }
   return ticks;
 }
 
@@ -130,11 +197,18 @@ function formatXTick(ts: number, periodHours: number): string {
   return formatDate(ts);
 }
 
+// --- Main component ---
+
 export function GlucoseChartSection() {
   const [periodIdx, setPeriodIdx] = useState(3); // default 24H
   const period = PERIODS[periodIdx];
 
   const glucoseData = filterByPeriod(allGlucoseData, period.hours);
+  const bolusData = filterByPeriod(allBolusData, period.hours);
+  const basalSegments = useMemo(
+    () => filterByPeriod(allBasalData, period.hours),
+    [period.hours]
+  );
 
   const inRange = glucoseData.filter((d) => d.value >= 70 && d.value <= 180);
   const highLow = glucoseData.filter(
@@ -142,23 +216,36 @@ export function GlucoseChartSection() {
   );
   const urgent = glucoseData.filter((d) => d.value > 250 || d.value < 55);
 
-  const currentValue =
-    glucoseData.length > 0 ? glucoseData[glucoseData.length - 1].value : 0;
+  const currentValue = glucoseData.length > 0 ? glucoseData[glucoseData.length - 1].value : 0;
   const xTicks = getXTicks(glucoseData, period.hours);
 
-  // Auto-scale Y axis to data range (matching platform behavior)
+  // Auto-scale Y axis
   const allValues = glucoseData.map((d) => d.value);
   const dataMin = Math.min(...allValues);
   const dataMax = Math.max(...allValues);
   const yMin = Math.max(40, Math.floor((dataMin - 20) / 10) * 10);
   const yMax = Math.min(400, Math.ceil((dataMax + 20) / 10) * 10);
-
-  // Generate Y axis ticks that include the range boundaries
   const yTicks: number[] = [];
   const yStep = yMax - yMin > 200 ? 70 : 50;
-  for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) {
-    yTicks.push(y);
-  }
+  for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) yTicks.push(y);
+
+  // Insulin Y domain (hidden axis, basal area occupies bottom ~25%)
+  const insulinDomain = useMemo(() => {
+    if (basalSegments.length === 0) return [0, 3];
+    const maxRate = basalSegments.reduce((m, b) => Math.max(m, b.rate), 0);
+    return [0, maxRate * 4];
+  }, [basalSegments]);
+
+  // Bolus scatter data positioned near chart top
+  const bolusScatterData = useMemo(() => {
+    const bolusY = yMax - (yMax - yMin) * 0.05;
+    return bolusData.map((b) => ({ ...b, value: bolusY }));
+  }, [bolusData, yMin, yMax]);
+
+  // X domain
+  const xDomain = glucoseData.length > 0
+    ? [glucoseData[0].timestamp, glucoseData[glucoseData.length - 1].timestamp]
+    : [0, 1];
 
   return (
     <AnimatedSection className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
@@ -186,21 +273,12 @@ export function GlucoseChartSection() {
           }}
         >
           <div className="flex items-center justify-center gap-3">
-            <span
-              className="text-5xl font-bold tabular-nums sm:text-6xl"
-              style={{ color: getRangeColor(currentValue) }}
-            >
+            <span className="text-5xl font-bold tabular-nums sm:text-6xl" style={{ color: getRangeColor(currentValue) }}>
               {currentValue}
             </span>
-            <ArrowRight
-              className="h-8 w-8"
-              style={{ color: getRangeColor(currentValue) }}
-            />
+            <ArrowRight className="h-8 w-8" style={{ color: getRangeColor(currentValue) }} />
           </div>
-          <div className="mt-1 text-center text-sm text-muted-foreground">
-            mg/dL
-          </div>
-
+          <div className="mt-1 text-center text-sm text-muted-foreground">mg/dL</div>
           <div className="mt-4 flex items-center justify-center gap-6 text-center text-xs sm:gap-10 sm:text-sm">
             <div className="border-r border-border pr-6 sm:pr-10">
               <div className="font-medium text-muted-foreground">IOB</div>
@@ -221,13 +299,11 @@ export function GlucoseChartSection() {
           </div>
         </div>
 
-        {/* Chart header with working period buttons */}
+        {/* Chart header */}
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">Glucose Trend</span>
-            <span className="text-xs text-muted-foreground">
-              Drag chart to zoom
-            </span>
+            <span className="text-xs text-muted-foreground">Drag chart to zoom</span>
           </div>
           <div className="flex gap-0.5">
             {PERIODS.map((p, i) => (
@@ -235,9 +311,7 @@ export function GlucoseChartSection() {
                 key={p.label}
                 onClick={() => setPeriodIdx(i)}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                  i === periodIdx
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent"
+                  i === periodIdx ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
                 }`}
               >
                 {p.label}
@@ -246,38 +320,37 @@ export function GlucoseChartSection() {
           </div>
         </div>
 
-        {/* Chart -- matches platform: scatter dots only, no basal/bolus overlay */}
+        {/* Chart */}
         <div className="h-64 w-full sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart
-              margin={{ top: 10, right: 5, left: -15, bottom: 0 }}
-            >
+            <ComposedChart margin={{ top: 10, right: 5, left: -15, bottom: 0 }}>
               {/* Target range shading */}
-              <ReferenceArea
-                y1={70}
-                y2={180}
-                fill="#22C55E"
-                fillOpacity={0.06}
-              />
+              <ReferenceArea yAxisId="glucose" y1={70} y2={180} fill="#22C55E" fillOpacity={0.06} />
 
-              {/* Dotted grid lines matching platform */}
-              <ReferenceLine
-                y={yMax}
-                stroke="currentColor"
-                strokeDasharray="3 6"
-                strokeWidth={0.5}
-                strokeOpacity={0.15}
-              />
+              {/* Grid lines */}
               {yTicks.map((y) => (
-                <ReferenceLine
-                  key={y}
-                  y={y}
-                  stroke="currentColor"
-                  strokeDasharray="3 6"
-                  strokeWidth={0.5}
-                  strokeOpacity={0.15}
-                />
+                <ReferenceLine key={y} yAxisId="glucose" y={y} stroke="currentColor" strokeDasharray="3 6" strokeWidth={0.5} strokeOpacity={0.15} />
               ))}
+
+              {/* Basal rate area segments -- filled rectangles at bottom, matching platform */}
+              {basalSegments.map((b, i) => {
+                const nextTs = i + 1 < basalSegments.length ? basalSegments[i + 1].timestamp : xDomain[1];
+                return (
+                  <ReferenceArea
+                    key={`basal-${b.timestamp}`}
+                    yAxisId="insulin"
+                    x1={Math.max(b.timestamp, xDomain[0])}
+                    x2={Math.min(nextTs, xDomain[1])}
+                    y1={0}
+                    y2={b.rate}
+                    fill="#3b82f6"
+                    fillOpacity={0.15}
+                    stroke="#3b82f6"
+                    strokeOpacity={0.6}
+                    strokeWidth={1}
+                  />
+                );
+              })}
 
               <XAxis
                 dataKey="timestamp"
@@ -292,6 +365,7 @@ export function GlucoseChartSection() {
                 allowDuplicatedCategory={false}
               />
               <YAxis
+                yAxisId="glucose"
                 domain={[yMin, yMax]}
                 ticks={yTicks}
                 tick={{ fontSize: 11 }}
@@ -299,35 +373,36 @@ export function GlucoseChartSection() {
                 axisLine={false}
                 tickLine={false}
               />
-              {/* Larger dots to match platform density */}
+              <YAxis
+                yAxisId="insulin"
+                orientation="right"
+                domain={insulinDomain}
+                hide
+              />
               <ZAxis range={[35, 35]} />
               <Tooltip content={<CustomTooltip />} cursor={false} />
 
-              {/* Glucose scatter dots -- same 3 categories as the platform */}
-              <Scatter
-                data={inRange}
-                dataKey="value"
-                fill="#22C55E"
-                name="In Range"
-              />
-              <Scatter
-                data={highLow}
-                dataKey="value"
-                fill="#F59E0B"
-                name="High/Low"
-              />
-              <Scatter
-                data={urgent}
-                dataKey="value"
-                fill="#EF4444"
-                name="Urgent"
-              />
+              {/* Glucose scatter dots */}
+              <Scatter yAxisId="glucose" data={inRange} dataKey="value" fill="#22C55E" name="In Range" />
+              <Scatter yAxisId="glucose" data={highLow} dataKey="value" fill="#F59E0B" name="High/Low" />
+              <Scatter yAxisId="glucose" data={urgent} dataKey="value" fill="#EF4444" name="Urgent" />
+
+              {/* Bolus markers near chart top -- diamond for auto, circle for manual */}
+              {bolusScatterData.length > 0 && (
+                <Scatter
+                  yAxisId="glucose"
+                  data={bolusScatterData}
+                  dataKey="value"
+                  shape={renderBolusMarker}
+                  name="Bolus"
+                />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Legend -- matches platform: 3 items only */}
-        <div className="mt-3 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+        {/* Legend -- matches platform */}
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#22C55E]" />
             70-180 Target
@@ -339,6 +414,18 @@ export function GlucoseChartSection() {
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#EF4444]" />
             Urgent
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rotate-45 bg-[#3b82f6]" />
+            Auto Correction
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#8b5cf6]" />
+            Manual Bolus
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-4 rounded-sm bg-[#3b82f6] opacity-30" />
+            Basal Rate
           </span>
         </div>
       </div>
