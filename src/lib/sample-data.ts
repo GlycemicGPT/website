@@ -33,55 +33,72 @@ function generateGlucoseData(): GlucoseReading[] {
   const data: GlucoseReading[] = [];
   const rand = seededRandom(42);
 
+  // Pre-generate per-day variation so each day feels different
+  const dayVariations: { shift: number; bkfSpike: number; lunchSpike: number; dinnerSpike: number; dawn: number }[] = [];
+  for (let d = 0; d < DAYS; d++) {
+    dayVariations.push({
+      shift: (rand() - 0.5) * 30,         // -15 to +15 overall shift
+      bkfSpike: 30 + rand() * 40,          // 30-70 spike magnitude
+      lunchSpike: 25 + rand() * 35,        // 25-60
+      dinnerSpike: 30 + rand() * 45,       // 30-75
+      dawn: 20 + rand() * 30,              // 20-50 dawn phenomenon
+    });
+  }
+
+  // Smoothed random walk for CGM-like noise (no sudden jumps)
+  let smoothNoise = 0;
+
   for (let ts = START; ts <= NOW; ts += INTERVAL_MS) {
     const date = new Date(ts);
     const hour = date.getHours() + date.getMinutes() / 60;
-    const dayOfWeek = date.getDay();
-
-    // Base pattern varies slightly by day
-    const dayShift = (dayOfWeek * 3.7) % 10 - 5; // -5 to +5 per day
+    const dayIndex = Math.floor((ts - START) / (24 * 60 * 60 * 1000));
+    const dv = dayVariations[Math.min(dayIndex, dayVariations.length - 1)];
 
     let base: number;
 
     if (hour < 4) {
-      base = 112 + Math.sin(hour * 0.4) * 6;
+      base = 110 + Math.sin(hour * 0.3) * 5;
     } else if (hour < 7) {
-      // Dawn phenomenon
-      base = 112 + ((hour - 4) / 3) * 45;
+      // Dawn phenomenon (variable per day)
+      base = 110 + ((hour - 4) / 3) * dv.dawn;
     } else if (hour < 8) {
-      // Breakfast spike
-      base = 157 + (hour - 7) * 50;
-    } else if (hour < 10) {
-      // Post-breakfast correction
-      base = 207 - ((hour - 8) / 2) * 60;
+      // Breakfast spike start
+      base = 110 + dv.dawn + (hour - 7) * dv.bkfSpike;
+    } else if (hour < 10.5) {
+      // Post-breakfast correction (gradual)
+      const peak = 110 + dv.dawn + dv.bkfSpike;
+      base = peak - ((hour - 8) / 2.5) * (peak - 130);
     } else if (hour < 12) {
-      // Mid-morning
-      base = 147 - ((hour - 10) / 2) * 15;
+      // Mid-morning stability
+      base = 130 + Math.sin((hour - 10.5) * 1.2) * 8;
     } else if (hour < 13) {
       // Lunch spike
-      base = 132 + (hour - 12) * 55;
-    } else if (hour < 15) {
-      // Post-lunch
-      base = 187 - ((hour - 13) / 2) * 50;
+      base = 130 + (hour - 12) * dv.lunchSpike;
+    } else if (hour < 15.5) {
+      // Post-lunch correction
+      const peak = 130 + dv.lunchSpike;
+      base = peak - ((hour - 13) / 2.5) * (peak - 125);
     } else if (hour < 18) {
       // Afternoon
-      base = 137 + Math.sin((hour - 15) * 0.7) * 10;
-    } else if (hour < 19) {
+      base = 125 + Math.sin((hour - 15.5) * 0.6) * 10;
+    } else if (hour < 19.5) {
       // Dinner spike
-      base = 142 + (hour - 18) * 48;
-    } else if (hour < 21) {
-      // Post-dinner
-      base = 190 - ((hour - 19) / 2) * 55;
+      base = 130 + ((hour - 18) / 1.5) * dv.dinnerSpike;
+    } else if (hour < 22) {
+      // Post-dinner correction
+      const peak = 130 + dv.dinnerSpike;
+      base = peak - ((hour - 19.5) / 2.5) * (peak - 120);
     } else {
       // Evening settling
-      base = 135 - ((hour - 21) / 3) * 18;
+      base = 120 - ((hour - 22) / 2) * 10;
     }
 
-    base += dayShift;
+    base += dv.shift;
 
-    // Natural noise
-    const noise = (rand() - 0.5) * 20 + Math.sin(ts / 300000) * 6;
-    const value = Math.round(Math.max(55, Math.min(280, base + noise)));
+    // Smooth random walk: small steps, CGM-like (max ~3 mg/dL change per 5 min)
+    smoothNoise += (rand() - 0.5) * 6;
+    smoothNoise *= 0.92; // decay toward zero
+    const value = Math.round(Math.max(55, Math.min(320, base + smoothNoise)));
 
     data.push({ timestamp: ts, value });
   }

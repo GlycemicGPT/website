@@ -32,6 +32,10 @@ const Scatter = dynamic(
   () => import("recharts").then((m) => m.Scatter),
   { ssr: false }
 );
+const Line = dynamic(
+  () => import("recharts").then((m) => m.Line),
+  { ssr: false }
+);
 const XAxis = dynamic(
   () => import("recharts").then((m) => m.XAxis),
   { ssr: false }
@@ -72,7 +76,7 @@ interface TooltipPayloadItem {
     timestamp: number;
     value?: number;
     units?: number;
-    isAutomated?: boolean;
+    type?: string;
     rate?: number;
   };
   dataKey: string;
@@ -87,11 +91,21 @@ function CustomTooltip({
   label?: string;
 }) {
   if (!active || !payload?.length) return null;
-  const data = payload[0].payload;
+
+  // Find the right payload item -- Recharts may include basal Area data too.
+  // Prioritize: bolus (has units) > glucose (has value > 0) > first item
+  let data = payload[0].payload;
+  for (const item of payload) {
+    if (item.payload.units != null) { data = item.payload; break; }
+    if (item.payload.value && item.payload.value > 40 && !item.payload.rate) {
+      data = item.payload;
+      break;
+    }
+  }
 
   // Bolus tooltip
   if (data.units != null) {
-    const isAuto = data.isAutomated;
+    const isAuto = data.type === "correction";
     const color = isAuto ? "#3b82f6" : "#8b5cf6";
     return (
       <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
@@ -107,6 +121,8 @@ function CustomTooltip({
 
   // Glucose tooltip
   const value = data.value ?? 0;
+  if (value < 40) return null; // Skip basal-only hits
+
   const basal = getBasalAt(data.timestamp);
   const idx = allGlucoseData.findIndex((d) => d.timestamp === data.timestamp);
   const prev = idx > 3 ? allGlucoseData[idx - 3].value : value;
@@ -398,7 +414,22 @@ export function GlucoseChartSection() {
               />
               {/* Dot size: smaller for multi-day views (matches platform) */}
               <ZAxis range={[dotSize, dotSize]} />
-              <Tooltip content={<CustomTooltip />} cursor={false} />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ stroke: "currentColor", strokeOpacity: 0.15, strokeDasharray: "3 3" }}
+              />
+
+              {/* Invisible line for tooltip hover detection across full X range */}
+              <Line
+                yAxisId="glucose"
+                data={glucoseData}
+                dataKey="value"
+                stroke="transparent"
+                strokeWidth={0}
+                dot={false}
+                activeDot={{ r: 5, fill: "currentColor", className: "fill-primary", strokeWidth: 0 }}
+                isAnimationActive={false}
+              />
 
               {/* Glucose scatter dots */}
               <Scatter yAxisId="glucose" data={inRange} dataKey="value" fill="#22C55E" name="In Range" />
