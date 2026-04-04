@@ -1,69 +1,186 @@
 export interface GlucoseReading {
-  time: string;
+  timestamp: number; // ms since epoch
   value: number;
-  hour: number;
+}
+
+export interface BasalSegment {
+  timestamp: number;
+  rate: number; // u/hr
+}
+
+export interface BolusEvent {
+  timestamp: number;
+  units: number;
+  type: "meal" | "correction";
+}
+
+// Generate 7 days of realistic CGM data ending ~now
+const DAYS = 7;
+const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const NOW = Date.now();
+const START = NOW - DAYS * 24 * 60 * 60 * 1000;
+
+// Seeded pseudo-random for deterministic output across renders
+function seededRandom(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
 }
 
 function generateGlucoseData(): GlucoseReading[] {
   const data: GlucoseReading[] = [];
+  const rand = seededRandom(42);
 
-  for (let i = 0; i < 288; i++) {
-    const hour = (i * 5) / 60;
-    const minutes = i * 5;
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    const time = `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  for (let ts = START; ts <= NOW; ts += INTERVAL_MS) {
+    const date = new Date(ts);
+    const hour = date.getHours() + date.getMinutes() / 60;
+    const dayOfWeek = date.getDay();
+
+    // Base pattern varies slightly by day
+    const dayShift = (dayOfWeek * 3.7) % 10 - 5; // -5 to +5 per day
 
     let base: number;
 
     if (hour < 4) {
-      // Overnight: stable 110-125
-      base = 115 + Math.sin(hour * 0.5) * 8;
+      base = 112 + Math.sin(hour * 0.4) * 6;
     } else if (hour < 7) {
-      // Dawn phenomenon: gradual rise 115->160
-      base = 115 + ((hour - 4) / 3) * 50;
+      // Dawn phenomenon
+      base = 112 + ((hour - 4) / 3) * 45;
     } else if (hour < 8) {
-      // Breakfast spike start
-      base = 165 + (hour - 7) * 55;
-    } else if (hour < 9.5) {
-      // Post-breakfast peak and correction
-      base = 220 - ((hour - 8) / 1.5) * 70;
+      // Breakfast spike
+      base = 157 + (hour - 7) * 50;
+    } else if (hour < 10) {
+      // Post-breakfast correction
+      base = 207 - ((hour - 8) / 2) * 60;
     } else if (hour < 12) {
-      // Mid-morning settling
-      base = 150 - ((hour - 9.5) / 2.5) * 20;
+      // Mid-morning
+      base = 147 - ((hour - 10) / 2) * 15;
     } else if (hour < 13) {
       // Lunch spike
-      base = 130 + (hour - 12) * 60;
+      base = 132 + (hour - 12) * 55;
     } else if (hour < 15) {
-      // Post-lunch correction
-      base = 190 - ((hour - 13) / 2) * 55;
+      // Post-lunch
+      base = 187 - ((hour - 13) / 2) * 50;
     } else if (hour < 18) {
-      // Afternoon stable
-      base = 135 + Math.sin((hour - 15) * 0.8) * 12;
+      // Afternoon
+      base = 137 + Math.sin((hour - 15) * 0.7) * 10;
     } else if (hour < 19) {
       // Dinner spike
-      base = 140 + (hour - 18) * 55;
+      base = 142 + (hour - 18) * 48;
     } else if (hour < 21) {
-      // Post-dinner correction
-      base = 195 - ((hour - 19) / 2) * 60;
+      // Post-dinner
+      base = 190 - ((hour - 19) / 2) * 55;
     } else {
       // Evening settling
-      base = 135 - ((hour - 21) / 3) * 20;
+      base = 135 - ((hour - 21) / 3) * 18;
     }
 
-    // Add realistic noise
-    const noise = (Math.sin(i * 2.7) * 8 + Math.cos(i * 1.3) * 5);
-    const value = Math.round(Math.max(65, Math.min(260, base + noise)));
+    base += dayShift;
 
-    data.push({ time, value, hour });
+    // Natural noise
+    const noise = (rand() - 0.5) * 20 + Math.sin(ts / 300000) * 6;
+    const value = Math.round(Math.max(55, Math.min(280, base + noise)));
+
+    data.push({ timestamp: ts, value });
   }
 
   return data;
 }
 
-export const glucoseData = generateGlucoseData();
+function generateBasalData(): BasalSegment[] {
+  const segments: BasalSegment[] = [];
+  const rates = [
+    { hour: 0, rate: 0.8 },
+    { hour: 3, rate: 0.9 },
+    { hour: 6, rate: 1.2 },
+    { hour: 9, rate: 0.85 },
+    { hour: 12, rate: 1.0 },
+    { hour: 15, rate: 0.9 },
+    { hour: 18, rate: 1.1 },
+    { hour: 21, rate: 0.85 },
+  ];
 
-export const currentBG = glucoseData[glucoseData.length - 1];
+  for (let day = 0; day < DAYS; day++) {
+    const dayStart = START + day * 24 * 60 * 60 * 1000;
+    for (const { hour, rate } of rates) {
+      segments.push({
+        timestamp: dayStart + hour * 60 * 60 * 1000,
+        rate,
+      });
+    }
+  }
+
+  return segments;
+}
+
+function generateBolusData(): BolusEvent[] {
+  const events: BolusEvent[] = [];
+  const rand = seededRandom(99);
+
+  for (let day = 0; day < DAYS; day++) {
+    const dayStart = START + day * 24 * 60 * 60 * 1000;
+
+    // Breakfast bolus ~7:00-7:30
+    events.push({
+      timestamp: dayStart + (7 * 60 + Math.round(rand() * 30)) * 60 * 1000,
+      units: 4 + Math.round(rand() * 3 * 10) / 10,
+      type: "meal",
+    });
+
+    // Lunch bolus ~12:00-12:30
+    events.push({
+      timestamp: dayStart + (12 * 60 + Math.round(rand() * 30)) * 60 * 1000,
+      units: 3.5 + Math.round(rand() * 2.5 * 10) / 10,
+      type: "meal",
+    });
+
+    // Dinner bolus ~18:00-18:45
+    events.push({
+      timestamp: dayStart + (18 * 60 + Math.round(rand() * 45)) * 60 * 1000,
+      units: 4.5 + Math.round(rand() * 3 * 10) / 10,
+      type: "meal",
+    });
+
+    // Occasional correction bolus ~15:00-16:00 (50% of days)
+    if (rand() > 0.5) {
+      events.push({
+        timestamp: dayStart + (15 * 60 + Math.round(rand() * 60)) * 60 * 1000,
+        units: 0.5 + Math.round(rand() * 1.5 * 10) / 10,
+        type: "correction",
+      });
+    }
+  }
+
+  return events;
+}
+
+export const allGlucoseData = generateGlucoseData();
+export const allBasalData = generateBasalData();
+export const allBolusData = generateBolusData();
+
+/** Filter data to a time window ending at `now`. */
+export function filterByPeriod<T extends { timestamp: number }>(
+  data: T[],
+  periodHours: number
+): T[] {
+  const cutoff = NOW - periodHours * 60 * 60 * 1000;
+  return data.filter((d) => d.timestamp >= cutoff);
+}
+
+/** Get the basal rate at a given timestamp (step function). */
+export function getBasalAt(timestamp: number): number {
+  let rate = 0.8;
+  for (const seg of allBasalData) {
+    if (seg.timestamp <= timestamp) {
+      rate = seg.rate;
+    } else {
+      break;
+    }
+  }
+  return rate;
+}
 
 export function getRangeLabel(value: number): string {
   if (value < 55) return "Very Low";
@@ -80,3 +197,31 @@ export function getRangeColor(value: number): string {
   if (value <= 250) return "#F59E0B";
   return "#EF4444";
 }
+
+export function formatTime(ts: number): string {
+  const d = new Date(ts);
+  const h = d.getHours();
+  const m = d.getMinutes().toString().padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${m} ${ampm}`;
+}
+
+export function formatDate(ts: number): string {
+  const d = new Date(ts);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+export function formatDateTime(ts: number): string {
+  return `${formatDate(ts)} ${formatTime(ts)}`;
+}
+
+/** Period definitions for the time selector buttons. */
+export const PERIODS = [
+  { label: "3H", hours: 3 },
+  { label: "6H", hours: 6 },
+  { label: "12H", hours: 12 },
+  { label: "24H", hours: 24 },
+  { label: "3D", hours: 72 },
+  { label: "7D", hours: 168 },
+] as const;
