@@ -40,9 +40,9 @@ const features = [
   },
   {
     icon: MessageCircle,
-    title: "Telegram Bot",
+    title: "Smart Notifications",
     description:
-      "Daily briefs, alert delivery, AI chat, and caregiver access all through Telegram. No app install required for caregivers.",
+      "Push notifications, daily briefs, and escalating alerts delivered to you and your caregivers across multiple channels.",
   },
   {
     icon: Watch,
