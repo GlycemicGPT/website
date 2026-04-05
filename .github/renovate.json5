@@ -1,0 +1,77 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits"
+  ],
+  "baseBranches": ["main"],
+  "automergeStrategy": "squash",
+  "branchPrefix": "renovate/",
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on monday"]
+  },
+  "labels": ["dependencies"],
+  "ignorePaths": ["**/node_modules/**"],
+  "timezone": "America/Chicago",
+  "schedule": ["after 9am and before 5pm every weekday"],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "dependencies"],
+    "minimumReleaseAge": "0 days"
+  },
+  "packageRules": [
+    {
+      "description": "Auto-merge patch and minor updates",
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "matchPackageNames": ["*"]
+    },
+    {
+      "description": "Auto-merge lockfile maintenance",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Require manual review for major updates",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major"]
+    },
+    {
+      "description": "Group TypeScript type definitions",
+      "matchPackageNames": ["@types/*"],
+      "groupName": "TypeScript type definitions"
+    },
+    {
+      "description": "Group ESLint dependencies",
+      "matchPackageNames": ["eslint", "@eslint/*", "eslint-*"],
+      "groupName": "ESLint"
+    },
+    {
+      "description": "Group testing libraries",
+      "matchPackageNames": ["jest", "@jest/*", "vitest", "@vitest/*", "@testing-library/*"],
+      "groupName": "Testing libraries"
+    },
+    {
+      "description": "Group Tailwind CSS",
+      "matchPackageNames": ["tailwindcss", "@tailwindcss/*"],
+      "groupName": "Tailwind CSS"
+    },
+    {
+      "description": "Group Recharts + D3",
+      "matchPackageNames": ["recharts", "d3-*"],
+      "groupName": "Recharts"
+    }
+  ]
+}

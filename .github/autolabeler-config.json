@@ -1,0 +1,59 @@
+{
+  "website": [
+    {
+      "includeGlobs": ["src/**"],
+      "excludeGlobs": []
+    }
+  ],
+  "ci": [
+    {
+      "includeGlobs": [".github/**"],
+      "excludeGlobs": []
+    }
+  ],
+  "documentation": [
+    {
+      "includeGlobs": ["**/*.md", "docs/**"],
+      "excludeGlobs": ["CHANGELOG.md"]
+    }
+  ],
+  "dependencies": [
+    {
+      "includeGlobs": ["package.json", "package-lock.json"],
+      "excludeGlobs": []
+    }
+  ],
+  "tests": [
+    {
+      "includeGlobs": ["**/*.test.*", "**/*.spec.*", "**/__tests__/**"],
+      "excludeGlobs": []
+    }
+  ],
+  "docs-sync": [
+    {
+      "includeGlobs": ["scripts/sync-docs.*", "docs-sources.yaml", "content/docs/**"],
+      "excludeGlobs": []
+    }
+  ],
+  "config": [
+    {
+      "includeGlobs": [
+        "next.config.*",
+        "tailwind.config.*",
+        "tsconfig.json",
+        "components.json",
+        ".lighthouserc.json",
+        "postcss.config.*",
+        "eslint.config.*"
+      ],
+      "excludeGlobs": []
+    }
+  ],
+  "new files": [
+    {
+      "includeGlobs": [],
+      "excludeGlobs": [],
+      "fileStatus": "added"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# Default: maintainers team reviews all changes
+* @GlycemicGPT/maintainers
+
+# Governance and project config: project lead only
+CONTRIBUTING.md @jlengelbrecht
+CODE_OF_CONDUCT.md @jlengelbrecht
+.github/ @jlengelbrecht

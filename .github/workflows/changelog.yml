@@ -1,0 +1,253 @@
+name: Changelog
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  changelog:
+    name: Update CHANGELOG.md
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+      has_changes: ${{ steps.changelog.outputs.has_changes }}
+      today: ${{ steps.changelog.outputs.today }}
+    # Skip bot commits and changelog updates
+    if: >-
+      !contains(github.event.head_commit.message, '[Changelog]') &&
+      !contains(github.event.head_commit.message, 'chore: release')
+
+    steps:
+      - name: Generate token for glycemicgpt-release
+        id: release-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ steps.release-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Get last changelog timestamp
+        id: last-date
+        run: |
+          CUTOFF=$(grep -oP '<!-- changelog-cutoff:\K[^>]+(?= -->)' CHANGELOG.md | head -1 || echo "")
+          if [ -n "$CUTOFF" ] && ! [[ "$CUTOFF" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[Z+] ]]; then
+            echo "::error::Invalid changelog cutoff marker: $CUTOFF"
+            exit 1
+          fi
+          if [ -z "$CUTOFF" ]; then
+            DATE=$(grep -oP '^## \K\d{4}-\d{2}-\d{2}' CHANGELOG.md | head -1 || echo "")
+            if [ -n "$DATE" ]; then
+              CUTOFF=$(date -u -d "$DATE + 1 day" +%Y-%m-%dT00:00:00Z 2>/dev/null || echo "${DATE}T23:59:59Z")
+            else
+              CUTOFF="2025-01-01T00:00:00Z"
+            fi
+          fi
+          echo "cutoff=$CUTOFF" >> "$GITHUB_OUTPUT"
+
+      - name: Collect merged PRs and generate changelog
+        id: changelog
+        env:
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          SINCE: ${{ steps.last-date.outputs.cutoff }}
+          PUSH_TIMESTAMP: ${{ github.event.head_commit.timestamp }}
+        run: |
+          UNTIL="$PUSH_TIMESTAMP"
+          if [ -z "$UNTIL" ]; then
+            UNTIL=$(git log -1 --format=%cI origin/main)
+          fi
+          NOW=$(date -u -d "$UNTIL" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo "$UNTIL")
+          TODAY=$(echo "$NOW" | cut -dT -f1)
+
+          ALL_PRS="[]"
+          CURSOR=""
+          while true; do
+            CURSOR_ARG=""
+            [ -n "$CURSOR" ] && CURSOR_ARG="-f cursor=$CURSOR"
+
+            PAGE=$(gh api graphql -f query='
+              query($searchQuery: String!, $cursor: String) {
+                search(query: $searchQuery, type: ISSUE, first: 100, after: $cursor) {
+                  pageInfo { hasNextPage endCursor }
+                  nodes {
+                    ... on PullRequest {
+                      number title url mergedAt
+                      author { login }
+                      labels(first: 20) { nodes { name } }
+                    }
+                  }
+                }
+              }
+            ' -f searchQuery="repo:${{ github.repository }} is:pr is:merged base:main merged:$SINCE..$UNTIL" \
+              $CURSOR_ARG)
+
+            NODES=$(echo "$PAGE" | jq '.data.search.nodes')
+            ALL_PRS=$(echo "$ALL_PRS $NODES" | jq -s '.[0] + .[1]')
+
+            HAS_NEXT=$(echo "$PAGE" | jq -r '.data.search.pageInfo.hasNextPage')
+            [ "$HAS_NEXT" != "true" ] && break
+            CURSOR=$(echo "$PAGE" | jq -r '.data.search.pageInfo.endCursor')
+          done
+
+          PRS="$ALL_PRS"
+          if [ -z "$PRS" ] || [ "$PRS" = "[]" ] || [ "$PRS" = "null" ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CONFIG=$(cat .github/changelog-pr-config.json)
+          CHANGELOG=$(echo "$PRS" | jq -r --arg today "$TODAY" --arg now "$NOW" --argjson config "$CONFIG" '
+            def should_include:
+              (.labels.nodes | [.[] | .name]) as $labels |
+              ($config.keepLabels as $keep | ($labels | any(. as $l | $keep | any(. == $l)))) or
+              ($config.excludeLabels as $excl | ($labels | all(. as $l | $excl | all(. != $l))));
+
+            def scope_for_pr:
+              (.labels.nodes | [.[] | .name]) as $labels |
+              ($config.scopes | map(select(.labels as $sl | ($labels | any(. as $l | $sl | any(. == $l)))))) |
+              if length > 0 then .[0]
+              else ($config.scopes | map(select(.name == "Uncategorized")) | .[0]) // {name: "Uncategorized", emoji: "?", hasSubCategories: false}
+              end;
+
+            def subcategory_for_pr:
+              (.labels.nodes | [.[] | .name]) as $labels |
+              ($config.subCategories | sort_by(.priority) | map(select(.labels as $scl | ($labels | any(. as $l | $scl | any(. == $l)))))) |
+              if length > 0 then .[0]
+              else $config.defaultSubCategory
+              end;
+
+            def format_entry:
+              (.author.login // "ghost") as $login |
+              "- \(.title) [@\($login)](https://github.com/\($login)) ([#\(.number)](\(.url)))";
+
+            [.[] | select(should_include)] |
+            if length == 0 then empty
+            else
+              [.[] | . + { _scope: scope_for_pr, _subcat: subcategory_for_pr }] |
+              group_by(._scope.name) |
+              sort_by(.[0]._scope.name as $name | ($config.scopes | to_entries | map(select(.value.name == $name)) | .[0].key) // 999) |
+              map(
+                .[0]._scope as $scope |
+                if $scope.hasSubCategories then
+                  group_by(._subcat.name) | sort_by(.[0]._subcat.priority) |
+                  map(.[0]._subcat as $subcat | "#### \($subcat.emoji) \($subcat.name)\n\n" + ([.[] | format_entry] | join("\n"))) |
+                  "### \($scope.emoji) \($scope.name)\n\n" + join("\n\n")
+                else
+                  "### \($scope.emoji) \($scope.name)\n\n" + ([.[] | format_entry] | join("\n"))
+                end
+              ) |
+              "## \($today)\n\n" + join("\n\n") + "\n\n<!-- changelog-cutoff:\($now) -->"
+            end
+          ')
+
+          if [ -z "$CHANGELOG" ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          echo "today=$TODAY" >> "$GITHUB_OUTPUT"
+          echo "$CHANGELOG" > /tmp/new-changelog-section.md
+
+      - name: Prepare changelog branch
+        if: steps.changelog.outputs.has_changes == 'true'
+        run: |
+          BRANCH="changelog/${{ steps.changelog.outputs.today }}"
+          git config user.name "glycemicgpt-release[bot]"
+          git config user.email "glycemicgpt-release[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH" origin/main
+
+      - name: Update CHANGELOG.md
+        if: steps.changelog.outputs.has_changes == 'true'
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            HEADER=$(head -1 CHANGELOG.md)
+            if echo "$HEADER" | grep -q "^# "; then
+              echo "$HEADER" > /tmp/updated-changelog.md
+              echo "" >> /tmp/updated-changelog.md
+              cat /tmp/new-changelog-section.md >> /tmp/updated-changelog.md
+              echo "" >> /tmp/updated-changelog.md
+              tail -n +2 CHANGELOG.md >> /tmp/updated-changelog.md
+            else
+              cat /tmp/new-changelog-section.md > /tmp/updated-changelog.md
+              echo "" >> /tmp/updated-changelog.md
+              cat CHANGELOG.md >> /tmp/updated-changelog.md
+            fi
+          else
+            echo "# Changelog" > /tmp/updated-changelog.md
+            echo "" >> /tmp/updated-changelog.md
+            cat /tmp/new-changelog-section.md >> /tmp/updated-changelog.md
+          fi
+          mv /tmp/updated-changelog.md CHANGELOG.md
+
+      - name: Create changelog PR
+        id: create-pr
+        if: steps.changelog.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+        run: |
+          TODAY="${{ steps.changelog.outputs.today }}"
+          BRANCH="changelog/$TODAY"
+
+          git add CHANGELOG.md
+          git commit -m "[Changelog] Update CHANGELOG.md for $TODAY" || exit 0
+          git push origin "$BRANCH" --force-with-lease
+
+          EXISTING_PR=$(gh pr list --base main --head "$BRANCH" --json number --jq '.[0].number' || echo "")
+          if [ -n "$EXISTING_PR" ] && [ "$EXISTING_PR" != "null" ]; then
+            echo "pr_number=$EXISTING_PR" >> "$GITHUB_OUTPUT"
+          else
+            gh pr create --base main --head "$BRANCH" \
+              --title "[Changelog] Update CHANGELOG.md" \
+              --body "Automated changelog update for $TODAY."
+            PR_NUM=$(gh pr list --base main --head "$BRANCH" --json number --jq '.[0].number')
+            echo "pr_number=$PR_NUM" >> "$GITHUB_OUTPUT"
+          fi
+
+  merge-changelog:
+    name: Merge Changelog PR
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: changelog
+    if: needs.changelog.outputs.has_changes == 'true' && needs.changelog.outputs.pr_number != ''
+
+    steps:
+      - name: Generate token for glycemicgpt-merge
+        id: merge-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.MERGE_APP_ID }}
+          private-key: ${{ secrets.MERGE_APP_PRIVATE_KEY }}
+
+      - name: Validate and merge changelog PR
+        env:
+          GH_TOKEN: ${{ steps.merge-token.outputs.token }}
+          PR_NUMBER: ${{ needs.changelog.outputs.pr_number }}
+        run: |
+          PR_DATA=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json author,title,files)
+          PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
+          PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+          PR_FILES=$(echo "$PR_DATA" | jq -r '.files[].path')
+
+          if [ "$PR_AUTHOR" != "glycemicgpt-release[bot]" ] && [ "$PR_AUTHOR" != "app/glycemicgpt-release" ]; then
+            echo "::error::Unexpected PR author: $PR_AUTHOR"
+            exit 1
+          fi
+
+          NON_CHANGELOG=$(echo "$PR_FILES" | grep -v "^CHANGELOG.md$" || true)
+          if [ -n "$NON_CHANGELOG" ]; then
+            echo "::error::PR modifies non-changelog files: $NON_CHANGELOG"
+            exit 1
+          fi
+
+          gh pr review "$PR_NUMBER" --approve --repo ${{ github.repository }}
+          gh pr merge "$PR_NUMBER" --rebase --admin --repo ${{ github.repository }}
