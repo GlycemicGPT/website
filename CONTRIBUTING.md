@@ -119,7 +119,7 @@ The static output is generated in `./out/` -- this is what gets deployed to GitH
 
 We use a simple **feature-branch** workflow. There is no `develop` branch.
 
-```
+```text
 feature branch --> PR --> squash merge --> main --> auto-deploy
                           |                          |
                       CI checks              GitHub Pages
@@ -411,4 +411,4 @@ We try to respond to PRs and issues within a few days. If your PR sits without f
 
 ---
 
-*Because no one should manage diabetes alone.* 💙
+_Because no one should manage diabetes alone._ 💙
