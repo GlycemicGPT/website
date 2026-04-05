@@ -187,3 +187,8 @@
     opacity: 0;
   }
 }
+
+/* Hide scrollbar for phone mockup (phones don't show browser scrollbars) */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

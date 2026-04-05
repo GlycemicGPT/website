@@ -284,8 +284,8 @@ export function PhoneDemo() {
               </div>
             </div>
 
-            {/* Scrollable messages area -- ref on container for programmatic scroll */}
-            <div ref={chatContainerRef} className="h-[320px] overflow-y-auto px-2.5 py-2">
+            {/* Scrollable messages area -- hidden scrollbar like a real phone */}
+            <div ref={chatContainerRef} className="h-[320px] overflow-y-auto px-2.5 py-2 scrollbar-none" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
               <div className="flex flex-col gap-1.5">
                 <AnimatePresence mode="popLayout">
                   {chatMessages.slice(0, visibleMessages).map((msg, i) => (
