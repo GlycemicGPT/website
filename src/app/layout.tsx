@@ -17,6 +17,15 @@ export const metadata: Metadata = {
   title: "GlycemicGPT - Open Source Diabetes Management Platform",
   description:
     "Because no one should manage diabetes alone. Real-time glucose monitoring, AI-powered analysis, caregiver alerts, and Wear OS support. Self-hosted, privacy-first, open source.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
     title: "GlycemicGPT - Open Source Diabetes Management Platform",
     description:
