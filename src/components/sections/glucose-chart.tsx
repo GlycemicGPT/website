@@ -281,7 +281,7 @@ export function GlucoseChartSection() {
         </h2>
         <p className="mx-auto max-w-2xl text-muted-foreground">
           Interactive demo built with the same technology powering the platform.
-          Switch time periods and hover to explore the data.
+          Hover over the chart to explore 24 hours of glucose, insulin, and basal data.
         </p>
       </div>
 
