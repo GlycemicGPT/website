@@ -68,7 +68,8 @@ jobs:
           configPath: .lighthouserc.json
 
       - name: Post Lighthouse scores to PR
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.ci-token.outputs.token || secrets.GITHUB_TOKEN }}
@@ -112,8 +113,8 @@ jobs:
 
             // Thresholds from .lighthouserc.json
             const thresholds = {
-              performance: { min: 60, level: 'warn' },
-              accessibility: { min: 90, level: 'error' },
+              performance: { min: 50, level: 'warn' },
+              accessibility: { min: 95, level: 'error' },
               'best-practices': { min: 90, level: 'error' },
               seo: { min: 90, level: 'error' },
             };
@@ -151,7 +152,7 @@ jobs:
               '|----------|-------|--------|',
               rows.trim(),
               '',
-              '**Thresholds:** Accessibility, Best Practices, SEO >= 90 (blocks PR). Performance >= 60 (warning only).',
+              '**Thresholds:** Accessibility >= 95, Best Practices >= 90, SEO >= 90 (blocks PR). Performance >= 50 (warning only).',
               reportLink,
             ].join('\n');
 
@@ -365,7 +366,7 @@ jobs:
           echo "PASSED: No AI attribution found."
 
       - name: Post attribution findings to PR
-        if: always()
+        if: always() && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.ci-token.outputs.token || secrets.GITHUB_TOKEN }}

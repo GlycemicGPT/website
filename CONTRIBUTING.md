@@ -8,20 +8,22 @@ This guide covers everything you need to know to get started.
 
 ## 📑 Table of Contents
 
-- [Ways to Contribute](#-ways-to-contribute)
-- [Finding Something to Work On](#-finding-something-to-work-on)
-- [Development Setup](#-development-setup)
-- [Branching & Workflow](#-branching--workflow)
-- [Commit Messages](#-commit-messages)
-- [Before You Submit](#-before-you-submit)
-- [Pull Request Process](#-pull-request-process)
-- [Code Style](#-code-style)
-- [AI Attribution Policy](#-ai-assisted-development--attribution-policy)
-- [Project Structure](#-project-structure)
-- [License](#-license)
-- [Questions?](#-questions)
+- [Ways to Contribute](#ways-to-contribute)
+- [Finding Something to Work On](#finding-something-to-work-on)
+- [Development Setup](#development-setup)
+- [Branching & Workflow](#branching--workflow)
+- [Commit Messages](#commit-messages)
+- [Before You Submit](#before-you-submit)
+- [Pull Request Process](#pull-request-process)
+- [Code Style](#code-style)
+- [AI Attribution Policy](#ai-assisted-development--attribution-policy)
+- [Project Structure](#project-structure)
+- [License](#license)
+- [Questions?](#questions)
 
 ---
+
+<a id="ways-to-contribute"></a>
 
 ## 💡 Ways to Contribute
 
@@ -39,6 +41,8 @@ Before opening an issue, please search [existing issues](https://github.com/Glyc
 
 ---
 
+<a id="finding-something-to-work-on"></a>
+
 ## 🔍 Finding Something to Work On
 
 Not sure where to start? Browse [open issues](https://github.com/GlycemicGPT/website/issues) and look for these labels:
@@ -52,6 +56,8 @@ Not sure where to start? Browse [open issues](https://github.com/GlycemicGPT/web
 If you'd like to work on something, comment on the issue to let others know. For larger changes, please open an issue first to discuss the approach before investing time in a PR.
 
 ---
+
+<a id="development-setup"></a>
 
 ## 🛠️ Development Setup
 
@@ -107,6 +113,8 @@ The static output is generated in `./out/` -- this is what gets deployed to GitH
 
 ---
 
+<a id="branching--workflow"></a>
+
 ## 🌿 Branching & Workflow
 
 We use a simple **feature-branch** workflow. There is no `develop` branch.
@@ -150,6 +158,8 @@ Use a descriptive prefix:
 
 ---
 
+<a id="commit-messages"></a>
+
 ## 📝 Commit Messages
 
 We use [Conventional Commits](https://www.conventionalcommits.org/). This drives our automated CHANGELOG generation.
@@ -175,6 +185,8 @@ chore(deps): update dependency next to v16.3
 ```
 
 ---
+
+<a id="before-you-submit"></a>
 
 ## ✅ Before You Submit
 
@@ -218,6 +230,8 @@ coderabbit review --plain --type committed --base main
 
 ---
 
+<a id="pull-request-process"></a>
+
 ## 🔀 Pull Request Process
 
 ### Creating Your PR
@@ -255,14 +269,16 @@ The Lighthouse audit runs on every PR and posts results as a comment:
 
 | Category | Threshold | Action |
 |----------|-----------|--------|
-| ♿ Accessibility | >= 90 | **Blocks PR** if below |
+| ♿ Accessibility | >= 95 | **Blocks PR** if below |
 | ✅ Best Practices | >= 90 | **Blocks PR** if below |
 | 🔍 SEO | >= 90 | **Blocks PR** if below |
-| ⚡ Performance | >= 60 | **Warning only** (doesn't block) |
+| ⚡ Performance | >= 50 | **Warning only** (doesn't block) |
 
-Performance is a soft gate because scores vary by CI environment. The other three are hard requirements.
+Accessibility is held to a higher standard (95) because this is a medical platform. Performance is a soft gate because CI environment scores vary -- production (GitHub Pages + CDN) scores are significantly higher.
 
 ---
+
+<a id="code-style"></a>
 
 ## 🎨 Code Style
 
@@ -300,6 +316,8 @@ Performance is a soft gate because scores vary by CI environment. The other thre
 - Images need meaningful `alt` text (or `aria-hidden` if decorative)
 
 ---
+
+<a id="ai-assisted-development--attribution-policy"></a>
 
 ## 🤖 AI-Assisted Development & Attribution Policy
 
@@ -340,6 +358,8 @@ These bots will **not** trigger findings:
 
 ---
 
+<a id="project-structure"></a>
+
 ## 📁 Project Structure
 
 ```
@@ -371,11 +391,15 @@ website/
 
 ---
 
+<a id="license"></a>
+
 ## 📜 License
 
 GlycemicGPT Website is licensed under the [GNU Affero General Public License v3.0](LICENSE). By contributing, you agree that your contributions will be licensed under the same license.
 
 ---
+
+<a id="questions"></a>
 
 ## 💬 Questions?
 
