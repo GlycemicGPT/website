@@ -191,11 +191,13 @@ export function PhoneDemo() {
   const [visibleMessages, setVisibleMessages] = useState(0);
   const [showTyping, setShowTyping] = useState(false);
   const [visibleAlert, setVisibleAlert] = useState(0);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages appear
+  // Auto-scroll chat container to bottom (not the page)
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [visibleMessages, showTyping]);
 
   useEffect(() => {
@@ -282,8 +284,8 @@ export function PhoneDemo() {
               </div>
             </div>
 
-            {/* Scrollable messages area */}
-            <div className="h-[320px] overflow-y-auto px-2.5 py-2">
+            {/* Scrollable messages area -- ref on container for programmatic scroll */}
+            <div ref={chatContainerRef} className="h-[320px] overflow-y-auto px-2.5 py-2">
               <div className="flex flex-col gap-1.5">
                 <AnimatePresence mode="popLayout">
                   {chatMessages.slice(0, visibleMessages).map((msg, i) => (
@@ -297,7 +299,6 @@ export function PhoneDemo() {
                     </div>
                   </div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
             </div>
 
