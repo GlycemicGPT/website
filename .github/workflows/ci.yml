@@ -34,6 +34,9 @@ jobs:
     name: Lighthouse Audit
     runs-on: ubuntu-latest
     needs: check
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -49,11 +52,121 @@ jobs:
       - name: Build
         run: npx next build
 
+      - name: Generate token for glycemicgpt-ci
+        id: ci-token
+        continue-on-error: true
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.CI_APP_ID }}
+          private-key: ${{ secrets.CI_APP_PRIVATE_KEY }}
+
       - name: Run Lighthouse
+        id: lhci
         uses: treosh/lighthouse-ci-action@v12
         with:
           uploadArtifacts: true
           configPath: .lighthouserc.json
+
+      - name: Post Lighthouse scores to PR
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.ci-token.outputs.token || secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const prNumber = context.payload.pull_request?.number;
+            if (!prNumber) return;
+
+            const marker = '<!-- lighthouse-comment -->';
+            const repo = context.repo;
+
+            // Find the LHCI results directory
+            const lhciDir = '.lighthouseci';
+            let scores = { performance: null, accessibility: null, 'best-practices': null, seo: null };
+            let reportUrl = '';
+
+            try {
+              const files = fs.readdirSync(lhciDir);
+              const jsonFiles = files.filter(f => f.startsWith('lhr-') && f.endsWith('.json'));
+
+              if (jsonFiles.length > 0) {
+                const report = JSON.parse(fs.readFileSync(path.join(lhciDir, jsonFiles[0]), 'utf8'));
+                for (const [key, cat] of Object.entries(report.categories || {})) {
+                  if (scores.hasOwnProperty(key)) {
+                    scores[key] = Math.round(cat.score * 100);
+                  }
+                }
+              }
+
+              // Try to find the upload URL from links file
+              const linksFiles = files.filter(f => f === 'links.json');
+              if (linksFiles.length > 0) {
+                const links = JSON.parse(fs.readFileSync(path.join(lhciDir, linksFiles[0]), 'utf8'));
+                const urls = Object.values(links);
+                if (urls.length > 0) reportUrl = urls[0];
+              }
+            } catch (e) {
+              console.log('Could not parse Lighthouse results:', e.message);
+            }
+
+            // Thresholds from .lighthouserc.json
+            const thresholds = {
+              performance: { min: 50, level: 'warn' },
+              accessibility: { min: 95, level: 'error' },
+              'best-practices': { min: 90, level: 'error' },
+              seo: { min: 90, level: 'error' },
+            };
+
+            function badge(score, key) {
+              if (score === null) return '? | -';
+              const t = thresholds[key];
+              const pass = score >= t.min;
+              const icon = pass ? '✅' : (t.level === 'error' ? '❌' : '⚠️');
+              const status = pass ? 'Pass' : (t.level === 'error' ? `Fail (min: ${t.min})` : `Warning (min: ${t.min})`);
+              return `${score} | ${icon} ${status}`;
+            }
+
+            const labels = {
+              performance: 'Performance',
+              accessibility: 'Accessibility',
+              'best-practices': 'Best Practices',
+              seo: 'SEO',
+            };
+
+            let rows = '';
+            for (const [key, label] of Object.entries(labels)) {
+              rows += `| ${label} | ${badge(scores[key], key)} |\n`;
+            }
+
+            const reportLink = reportUrl ? `\n[View full report](${reportUrl})` : '';
+            const jobPassed = '${{ steps.lhci.outcome }}' === 'success';
+            const emoji = jobPassed ? '✅' : '⚠️';
+
+            const body = [
+              marker,
+              `## 🔦 Lighthouse Audit ${emoji}`,
+              '',
+              '| Category | Score | Status |',
+              '|----------|-------|--------|',
+              rows.trim(),
+              '',
+              '**Thresholds:** Accessibility >= 95, Best Practices >= 90, SEO >= 90 (blocks PR). Performance >= 50 (warning only).',
+              reportLink,
+            ].join('\n');
+
+            // Upsert comment
+            const comments = await github.rest.issues.listComments({
+              ...repo, issue_number: prNumber, per_page: 100,
+            });
+            const existing = comments.data.find(c => c.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({ ...repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...repo, issue_number: prNumber, body });
+            }
 
   autolabeler:
     name: Label PR
@@ -253,7 +366,7 @@ jobs:
           echo "PASSED: No AI attribution found."
 
       - name: Post attribution findings to PR
-        if: always()
+        if: always() && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.ci-token.outputs.token || secrets.GITHUB_TOKEN }}
