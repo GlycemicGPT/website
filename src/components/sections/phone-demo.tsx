@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   MessageSquare,
@@ -44,7 +44,7 @@ const chatMessages: ChatMsg[] = [
   {
     role: "assistant",
     content:
-      "Current: 136 mg/dL, trending down -1.2/min. **Moderate risk** of going below 70 by 2 AM. Consider a 15g snack before bed. I'll alert you if glucose drops below 80.",
+      "Current: 136 mg/dL, trending down. **Moderate risk** of going below 70 by 2 AM. Consider a 15g snack before bed. I'll alert you if glucose drops below 80.",
   },
 ];
 
@@ -96,22 +96,24 @@ function ChatBubble({ msg }: { msg: ChatMsg }) {
   const isUser = msg.role === "user";
   return (
     <motion.div
-      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+      className={`flex shrink-0 ${isUser ? "justify-end" : "justify-start"}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
       <div
         className={`max-w-[85%] rounded-2xl px-3 py-2 text-[11px] leading-relaxed ${
-          isUser
-            ? "bg-blue-600 text-white"
-            : "bg-muted text-foreground"
+          isUser ? "bg-blue-600 text-white" : "bg-muted text-foreground"
         }`}
       >
         {msg.content.split("\n").map((line, i) => (
           <p key={i} className={i > 0 ? "mt-0.5" : ""}>
             {line.split("**").map((part, j) =>
-              j % 2 === 1 ? <strong key={j}>{part}</strong> : <span key={j}>{part}</span>
+              j % 2 === 1 ? (
+                <strong key={j}>{part}</strong>
+              ) : (
+                <span key={j}>{part}</span>
+              )
             )}
           </p>
         ))}
@@ -134,7 +136,12 @@ function AlertNotification({ alert }: { alert: AlertItem }) {
     brief: { bg: "bg-blue-500/15", border: "border-blue-500/30", icon: "text-blue-400" },
   };
   const c = colors[alert.level];
-  const Icon = alert.level === "recovery" ? CheckCircle : alert.level === "brief" ? Brain : Bell;
+  const Icon =
+    alert.level === "recovery"
+      ? CheckCircle
+      : alert.level === "brief"
+        ? Brain
+        : Bell;
 
   return (
     <motion.div
@@ -184,6 +191,12 @@ export function PhoneDemo() {
   const [visibleMessages, setVisibleMessages] = useState(0);
   const [showTyping, setShowTyping] = useState(false);
   const [visibleAlert, setVisibleAlert] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages appear
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [visibleMessages, showTyping]);
 
   useEffect(() => {
     if (prefersReducedMotion) {
@@ -196,12 +209,11 @@ export function PhoneDemo() {
 
     function nextChatMessage() {
       if (msgIdx >= chatMessages.length) {
-        // Done with chat, switch to alerts after pause
         timeout = setTimeout(() => {
           setPhase("alerts");
           setVisibleAlert(0);
           runAlerts();
-        }, 2000);
+        }, 2500);
         return;
       }
 
@@ -212,37 +224,36 @@ export function PhoneDemo() {
           setShowTyping(false);
           setVisibleMessages(msgIdx + 1);
           msgIdx++;
-          timeout = setTimeout(nextChatMessage, 1500);
-        }, 1200);
+          timeout = setTimeout(nextChatMessage, 2000);
+        }, 1500);
       } else {
         setVisibleMessages(msgIdx + 1);
         msgIdx++;
-        timeout = setTimeout(nextChatMessage, 600);
+        timeout = setTimeout(nextChatMessage, 800);
       }
     }
 
     let alertIdx = 0;
     function runAlerts() {
       if (alertIdx >= alerts.length) {
-        // Done with alerts, loop back to chat
         timeout = setTimeout(() => {
           setPhase("chat");
           setVisibleMessages(0);
           setShowTyping(false);
           msgIdx = 0;
           alertIdx = 0;
-          timeout = setTimeout(nextChatMessage, 1000);
-        }, 3000);
+          timeout = setTimeout(nextChatMessage, 1500);
+        }, 4000);
         return;
       }
 
       setVisibleAlert(alertIdx);
       alertIdx++;
-      timeout = setTimeout(runAlerts, 2500);
+      // Slower alert cycling -- 4 seconds per alert
+      timeout = setTimeout(runAlerts, 4000);
     }
 
-    // Start chat phase
-    timeout = setTimeout(nextChatMessage, 1000);
+    timeout = setTimeout(nextChatMessage, 1200);
 
     return () => clearTimeout(timeout);
   }, [prefersReducedMotion]);
@@ -265,30 +276,37 @@ export function PhoneDemo() {
               </div>
               <div>
                 <div className="text-[11px] font-semibold">AI Chat</div>
-                <div className="text-[9px] text-muted-foreground">Ask about your glucose data</div>
+                <div className="text-[9px] text-muted-foreground">
+                  Ask about your glucose data
+                </div>
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex h-[320px] flex-col gap-1.5 overflow-hidden px-2.5 py-2">
-              <AnimatePresence mode="popLayout">
-                {chatMessages.slice(0, visibleMessages).map((msg, i) => (
-                  <ChatBubble key={`chat-${i}`} msg={msg} />
-                ))}
-              </AnimatePresence>
-              {showTyping && (
-                <div className="flex justify-start">
-                  <div className="rounded-2xl bg-muted px-3 py-2">
-                    <TypingDots />
+            {/* Scrollable messages area */}
+            <div className="h-[320px] overflow-y-auto px-2.5 py-2">
+              <div className="flex flex-col gap-1.5">
+                <AnimatePresence mode="popLayout">
+                  {chatMessages.slice(0, visibleMessages).map((msg, i) => (
+                    <ChatBubble key={`chat-${i}`} msg={msg} />
+                  ))}
+                </AnimatePresence>
+                {showTyping && (
+                  <div className="flex justify-start shrink-0">
+                    <div className="rounded-2xl bg-muted px-3 py-2">
+                      <TypingDots />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
 
             {/* Input */}
             <div className="border-t border-border px-2.5 py-1.5">
               <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-2.5 py-1">
-                <span className="flex-1 text-[9px] text-muted-foreground">Ask about your glucose data...</span>
+                <span className="flex-1 text-[9px] text-muted-foreground">
+                  Ask about your glucose data...
+                </span>
                 <Send className="h-3 w-3 text-muted-foreground" />
               </div>
             </div>
@@ -308,7 +326,9 @@ export function PhoneDemo() {
               </div>
               <div>
                 <div className="text-[11px] font-semibold">Caregiver Alerts</div>
-                <div className="text-[9px] text-muted-foreground">Monitoring Sarah</div>
+                <div className="text-[9px] text-muted-foreground">
+                  Monitoring Sarah
+                </div>
               </div>
             </div>
 
@@ -328,10 +348,15 @@ export function PhoneDemo() {
                   .reverse()
                   .slice(0, 2)
                   .map((a, i) => (
-                    <div key={`prev-${i}`} className="mx-2 rounded-xl border border-border/20 bg-muted/30 p-2">
+                    <div
+                      key={`prev-${i}`}
+                      className="mx-2 rounded-xl border border-border/20 bg-muted/30 p-2"
+                    >
                       <div className="flex items-center gap-2">
                         <Bell className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-[9px] text-muted-foreground">{a.title}</span>
+                        <span className="text-[9px] text-muted-foreground">
+                          {a.title}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -340,7 +365,9 @@ export function PhoneDemo() {
 
             {/* Bottom bar */}
             <div className="border-t border-border px-2.5 py-1.5 text-center">
-              <span className="text-[9px] text-muted-foreground">Real-time caregiver monitoring</span>
+              <span className="text-[9px] text-muted-foreground">
+                Real-time caregiver monitoring
+              </span>
             </div>
           </motion.div>
         )}
