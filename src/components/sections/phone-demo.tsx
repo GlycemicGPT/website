@@ -185,7 +185,7 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 
 // --- Main Component ---
 
-export function PhoneDemo() {
+export function PhoneDemo({ onDailyBriefAlert }: { onDailyBriefAlert?: () => void }) {
   const prefersReducedMotion = useReducedMotion();
   const [phase, setPhase] = useState<"chat" | "alerts">("chat");
   const [visibleMessages, setVisibleMessages] = useState(0);
@@ -250,6 +250,10 @@ export function PhoneDemo() {
       }
 
       setVisibleAlert(alertIdx);
+      // Trigger browser daily brief when the "Daily Brief" alert appears (index 3)
+      if (alertIdx === 3 && onDailyBriefAlert) {
+        onDailyBriefAlert();
+      }
       alertIdx++;
       // Slower alert cycling -- 4 seconds per alert
       timeout = setTimeout(runAlerts, 4000);
@@ -258,7 +262,7 @@ export function PhoneDemo() {
     timeout = setTimeout(nextChatMessage, 1200);
 
     return () => clearTimeout(timeout);
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, onDailyBriefAlert]);
 
   return (
     <PhoneFrame>

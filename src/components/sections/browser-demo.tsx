@@ -23,29 +23,22 @@ function BrowserFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Animated section that fades in with a delay
+// Each section fades in based on a visibility index
 function RevealBlock({
   children,
-  delay,
+  visible,
   reduced,
 }: {
   children: React.ReactNode;
-  delay: number;
+  visible: boolean;
   reduced: boolean | null;
 }) {
-  const [visible, setVisible] = useState(reduced ? true : false);
-
-  useEffect(() => {
-    if (reduced) return;
-    const t = setTimeout(() => setVisible(true), delay);
-    return () => clearTimeout(t);
-  }, [delay, reduced]);
-
-  if (!visible) return null;
+  if (reduced) return <>{children}</>;
+  if (!visible) return <div className="opacity-0">{children}</div>;
 
   return (
     <motion.div
-      initial={reduced ? {} : { opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
@@ -54,20 +47,31 @@ function RevealBlock({
   );
 }
 
-export function BrowserDemo() {
+export function BrowserDemo({ trigger }: { trigger: number }) {
   const prefersReducedMotion = useReducedMotion();
-  const [cycle, setCycle] = useState(0);
+  const [visibleSections, setVisibleSections] = useState(prefersReducedMotion ? 6 : 0);
 
-  // Reset and replay the animation every ~20 seconds
+  // Reset and animate when trigger changes (synced with phone daily brief alert)
   useEffect(() => {
-    if (prefersReducedMotion) return;
-    const interval = setInterval(() => setCycle((c) => c + 1), 22000);
-    return () => clearInterval(interval);
-  }, [prefersReducedMotion]);
+    if (prefersReducedMotion || trigger === 0) return;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset animation on trigger
+    setVisibleSections(0);
+
+    const delays = [0, 600, 1500, 2500, 3500, 4500];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+
+    delays.forEach((delay, i) => {
+      timeouts.push(setTimeout(() => setVisibleSections(i + 1), delay));
+    });
+
+    return () => timeouts.forEach(clearTimeout);
+  }, [trigger, prefersReducedMotion]);
 
   return (
     <BrowserFrame>
-      <div className="flex" key={cycle}>
+      {/* Fixed height container -- prevents resizing during animation */}
+      <div className="flex h-[440px]">
         {/* Sidebar */}
         <div className="hidden sm:flex w-[110px] shrink-0 flex-col border-r border-border bg-muted/30 px-2 py-3">
           <div className="flex items-center gap-1.5 mb-4">
@@ -93,10 +97,10 @@ export function BrowserDemo() {
           </div>
         </div>
 
-        {/* Main content - Animated Daily Brief */}
-        <div className="flex-1 px-4 py-4 min-h-[400px]">
-          {/* Header */}
-          <RevealBlock delay={0} reduced={prefersReducedMotion}>
+        {/* Main content - Daily Brief with fixed layout */}
+        <div className="flex-1 overflow-hidden px-4 py-4">
+          {/* Header -- always visible */}
+          <RevealBlock visible={visibleSections >= 1} reduced={prefersReducedMotion}>
             <div className="mb-4">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" />
@@ -109,7 +113,7 @@ export function BrowserDemo() {
           </RevealBlock>
 
           {/* Greeting */}
-          <RevealBlock delay={800} reduced={prefersReducedMotion}>
+          <RevealBlock visible={visibleSections >= 2} reduced={prefersReducedMotion}>
             <div className="mb-3 rounded-lg border border-border bg-muted/30 p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Sun className="h-3.5 w-3.5 text-amber-400" />
@@ -118,74 +122,62 @@ export function BrowserDemo() {
               <p className="text-[10px] leading-relaxed text-muted-foreground">
                 Here&apos;s your overnight summary. Glucose stayed in range{" "}
                 <strong className="text-foreground">82-156 mg/dL</strong> with
-                no lows detected. Overall time in range yesterday was{" "}
+                no lows detected. Time in range yesterday was{" "}
                 <strong className="text-foreground">76%</strong>.
               </p>
             </div>
           </RevealBlock>
 
           {/* Stats row */}
-          <RevealBlock delay={2000} reduced={prefersReducedMotion}>
+          <RevealBlock visible={visibleSections >= 3} reduced={prefersReducedMotion}>
             <div className="mb-3 grid grid-cols-3 gap-2">
               <div className="rounded-lg border border-border p-2.5 text-center">
                 <div className="text-lg font-bold text-green-400">76%</div>
-                <div className="text-[9px] text-muted-foreground">
-                  Time in Range
-                </div>
+                <div className="text-[9px] text-muted-foreground">Time in Range</div>
               </div>
               <div className="rounded-lg border border-border p-2.5 text-center">
                 <div className="text-lg font-bold">148</div>
-                <div className="text-[9px] text-muted-foreground">
-                  Avg mg/dL
-                </div>
+                <div className="text-[9px] text-muted-foreground">Avg mg/dL</div>
               </div>
               <div className="rounded-lg border border-border p-2.5 text-center">
                 <div className="text-lg font-bold text-amber-400">2</div>
-                <div className="text-[9px] text-muted-foreground">
-                  Highs Yesterday
-                </div>
+                <div className="text-[9px] text-muted-foreground">Highs Yesterday</div>
               </div>
             </div>
           </RevealBlock>
 
           {/* Pattern insight */}
-          <RevealBlock delay={3500} reduced={prefersReducedMotion}>
+          <RevealBlock visible={visibleSections >= 4} reduced={prefersReducedMotion}>
             <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <TrendingUp className="h-3.5 w-3.5 text-amber-400" />
-                <span className="text-[10px] font-semibold text-amber-400">
-                  Pattern Detected
-                </span>
+                <span className="text-[10px] font-semibold text-amber-400">Pattern Detected</span>
               </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed">
+              <p className="text-[9px] text-muted-foreground leading-relaxed">
                 Post-dinner highs for the <strong className="text-foreground">3rd day in a row</strong>.
-                Average post-dinner peak:{" "}
-                <strong className="text-foreground">218 mg/dL</strong>. Consider
-                adjusting your evening carb ratio or pre-bolus timing.
+                Average post-dinner peak: <strong className="text-foreground">218 mg/dL</strong>.
+                Consider adjusting your evening carb ratio.
               </p>
             </div>
           </RevealBlock>
 
           {/* AI Recommendation */}
-          <RevealBlock delay={5000} reduced={prefersReducedMotion}>
+          <RevealBlock visible={visibleSections >= 5} reduced={prefersReducedMotion}>
             <div className="mb-3 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Activity className="h-3.5 w-3.5 text-blue-400" />
-                <span className="text-[10px] font-semibold text-blue-400">
-                  AI Recommendation
-                </span>
+                <span className="text-[10px] font-semibold text-blue-400">AI Recommendation</span>
               </div>
-              <p className="text-[10px] text-muted-foreground leading-relaxed">
-                Your overall trend is improving week over week. Basal rates look
-                well-tuned overnight. Focus on the dinner carb ratio and you
-                could hit <strong className="text-foreground">80%+ in range</strong>{" "}
-                this week.
+              <p className="text-[9px] text-muted-foreground leading-relaxed">
+                Your trend is improving. Basal rates look well-tuned overnight.
+                Focus on dinner carb ratio and you could hit{" "}
+                <strong className="text-foreground">80%+ in range</strong> this week.
               </p>
             </div>
           </RevealBlock>
 
           {/* Disclaimer */}
-          <RevealBlock delay={6500} reduced={prefersReducedMotion}>
+          <RevealBlock visible={visibleSections >= 6} reduced={prefersReducedMotion}>
             <p className="flex items-center gap-1 text-[8px] text-muted-foreground">
               <AlertTriangle className="h-2.5 w-2.5" />
               Not medical advice. Consult your healthcare provider.
