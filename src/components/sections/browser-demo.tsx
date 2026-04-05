@@ -51,14 +51,14 @@ export function BrowserDemo({ trigger }: { trigger: number }) {
   const prefersReducedMotion = useReducedMotion();
   const [visibleSections, setVisibleSections] = useState(prefersReducedMotion ? 6 : 0);
 
-  // Reset and animate when trigger changes (synced with phone daily brief alert)
+  // Play animation on mount and re-sync when phone triggers daily brief
   useEffect(() => {
-    if (prefersReducedMotion || trigger === 0) return;
+    if (prefersReducedMotion) return;
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset animation on trigger
     setVisibleSections(0);
 
-    const delays = [0, 600, 1500, 2500, 3500, 4500];
+    const delays = [300, 900, 1800, 2800, 3800, 4800];
     const timeouts: ReturnType<typeof setTimeout>[] = [];
 
     delays.forEach((delay, i) => {
