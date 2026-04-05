@@ -14,10 +14,12 @@ export interface BolusEvent {
   type: "meal" | "correction";
 }
 
-// Generate 30 days of realistic CGM data ending ~now
+// Generate 30 days of realistic CGM data ending at a fixed point.
+// Using a fixed anchor ensures data doesn't change on page re-renders.
 const DAYS = 30;
 const INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-const NOW = Date.now();
+// Pin to April 5, 2026 3:00 PM -- stable across renders and builds
+const NOW = new Date("2026-04-05T15:00:00").getTime();
 const START = NOW - DAYS * 24 * 60 * 60 * 1000;
 
 // Seeded pseudo-random for deterministic output across renders
