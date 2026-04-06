@@ -12,16 +12,14 @@ interface WatchState {
   trend: string;
   iob: string;
   time: string;
-  dotColorLeft: string;
-  dotColorRight: string;
 }
 
 const states: WatchState[] = [
-  { phase: "face", bg: 142, trend: "\u2192", iob: "0.45", time: "02:30", dotColorLeft: "#22C55E", dotColorRight: "#22C55E" },
-  { phase: "rising", bg: 195, trend: "\u2197", iob: "1.2", time: "02:35", dotColorLeft: "#22C55E", dotColorRight: "#F59E0B" },
-  { phase: "alert", bg: 245, trend: "\u2191", iob: "1.2", time: "02:40", dotColorLeft: "#F59E0B", dotColorRight: "#EF4444" },
-  { phase: "chat", bg: 210, trend: "\u2198", iob: "2.8", time: "02:48", dotColorLeft: "#F59E0B", dotColorRight: "#F59E0B" },
-  { phase: "corrected", bg: 128, trend: "\u2192", iob: "0.3", time: "03:15", dotColorLeft: "#F59E0B", dotColorRight: "#22C55E" },
+  { phase: "face", bg: 142, trend: "\u2192", iob: "0.45", time: "02:30" },
+  { phase: "rising", bg: 195, trend: "\u2197", iob: "1.2", time: "02:35" },
+  { phase: "alert", bg: 245, trend: "\u2191", iob: "1.2", time: "02:40" },
+  { phase: "chat", bg: 210, trend: "\u2198", iob: "2.8", time: "02:48" },
+  { phase: "corrected", bg: 128, trend: "\u2192", iob: "0.3", time: "03:15" },
 ];
 
 // --- Watch Frame ---
@@ -70,36 +68,33 @@ function WatchFaceScreen({ state }: { state: WatchState }) {
         IoB: {state.iob} u
       </span>
 
-      {/* Graph strip -- 3D oval shape matching real watch face */}
-      <div className="relative w-[80%] mt-1.5 h-4 flex items-center">
-        {/* Left dot */}
-        <div
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full z-10"
-          style={{ backgroundColor: state.dotColorLeft }}
-        />
-        {/* Graph oval body */}
-        <div className="mx-2 flex-1 relative h-3">
-          {/* Gold/amber outline */}
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: "linear-gradient(180deg, #B8860B 0%, #DAA520 50%, #B8860B 100%)",
-              opacity: 0.6,
-            }}
-          />
-          {/* Dark green fill inside */}
-          <div
-            className="absolute inset-[1px] rounded-full"
-            style={{
-              background: "radial-gradient(ellipse at center bottom, #1a4a2e 0%, #0d2818 60%, #050f0a 100%)",
-            }}
-          />
-        </div>
-        {/* Right dot */}
-        <div
-          className="absolute right-0 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full z-10"
-          style={{ backgroundColor: state.dotColorRight }}
-        />
+      {/* Mini glucose graph -- actual dot trend like the main chart */}
+      <div className="relative w-[82%] mt-1.5 h-[22px] rounded-md overflow-hidden">
+        {/* Background with target range band */}
+        <div className="absolute inset-0 bg-zinc-900" />
+        <div className="absolute inset-x-0 top-[30%] bottom-[20%] bg-green-900/30" />
+        {/* Graph dots -- SVG mini scatter plot */}
+        <svg viewBox="0 0 100 30" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+          {/* Target range lines */}
+          <line x1="0" y1="8" x2="100" y2="8" stroke="#F59E0B" strokeWidth="0.3" strokeOpacity="0.3" strokeDasharray="2 2" />
+          <line x1="0" y1="22" x2="100" y2="22" stroke="#F59E0B" strokeWidth="0.3" strokeOpacity="0.3" strokeDasharray="2 2" />
+          {/* Glucose dots showing a trend pattern */}
+          {state.phase === "rising" || state.phase === "alert" ? (
+            /* Rising/high pattern */
+            <>
+              {[[5,20],[10,19],[15,18],[20,16],[25,15],[30,14],[35,13],[40,12],[42,11],[48,10],[53,9],[58,8],[63,7],[68,6],[73,5],[78,5],[83,4],[88,4],[93,3]].map(([x,y], i) => (
+                <circle key={i} cx={x} cy={y} r="1.2" fill={y < 8 ? "#F59E0B" : y < 5 ? "#EF4444" : "#22C55E"} />
+              ))}
+            </>
+          ) : (
+            /* In-range / stable pattern */
+            <>
+              {[[5,16],[10,15],[15,14],[20,15],[25,16],[30,14],[35,13],[40,14],[42,15],[48,14],[53,13],[58,14],[63,15],[68,14],[73,13],[78,14],[83,15],[88,14],[93,15]].map(([x,y], i) => (
+                <circle key={i} cx={x} cy={y} r="1.2" fill="#22C55E" />
+              ))}
+            </>
+          )}
+        </svg>
       </div>
 
       {/* Time (large, bold, matching real watch) */}
