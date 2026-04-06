@@ -33,7 +33,8 @@ function RevealBlock({
   visible: boolean;
   reduced: boolean | null;
 }) {
-  if (reduced) return <>{children}</>;
+  // Fix #2: handle reduced-motion preference changes -- always show if reduced
+  if (reduced) return <div>{children}</div>;
   if (!visible) return <div className="opacity-0">{children}</div>;
 
   return (
@@ -107,7 +108,7 @@ export function BrowserDemo({ trigger }: { trigger: number }) {
                 <h3 className="text-xs font-semibold">Daily Brief</h3>
               </div>
               <p className="text-[10px] text-muted-foreground">
-                Saturday, April 5
+                Today
               </p>
             </div>
           </RevealBlock>

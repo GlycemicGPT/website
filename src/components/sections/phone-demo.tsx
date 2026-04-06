@@ -202,16 +202,26 @@ export function PhoneDemo({ onDailyBriefAlert }: { onDailyBriefAlert?: () => voi
 
   useEffect(() => {
     if (prefersReducedMotion) {
+      // Fix #5: fully normalize state when reduced motion activates
       setVisibleMessages(chatMessages.length);
+      setPhase("chat");
+      setShowTyping(false);
       return;
     }
 
-    let timeout: ReturnType<typeof setTimeout>;
+    // Fix #1: track ALL timeouts to prevent memory leaks on unmount
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    function schedule(fn: () => void, ms: number) {
+      const id = setTimeout(fn, ms);
+      timeouts.push(id);
+      return id;
+    }
+
     let msgIdx = 0;
 
     function nextChatMessage() {
       if (msgIdx >= chatMessages.length) {
-        timeout = setTimeout(() => {
+        schedule(() => {
           setPhase("alerts");
           setVisibleAlert(0);
           runAlerts();
@@ -222,46 +232,44 @@ export function PhoneDemo({ onDailyBriefAlert }: { onDailyBriefAlert?: () => voi
       const msg = chatMessages[msgIdx];
       if (msg.role === "assistant") {
         setShowTyping(true);
-        timeout = setTimeout(() => {
+        schedule(() => {
           setShowTyping(false);
           setVisibleMessages(msgIdx + 1);
           msgIdx++;
-          timeout = setTimeout(nextChatMessage, 2000);
+          schedule(nextChatMessage, 2000);
         }, 1500);
       } else {
         setVisibleMessages(msgIdx + 1);
         msgIdx++;
-        timeout = setTimeout(nextChatMessage, 800);
+        schedule(nextChatMessage, 800);
       }
     }
 
     let alertIdx = 0;
     function runAlerts() {
       if (alertIdx >= alerts.length) {
-        timeout = setTimeout(() => {
+        schedule(() => {
           setPhase("chat");
           setVisibleMessages(0);
           setShowTyping(false);
           msgIdx = 0;
           alertIdx = 0;
-          timeout = setTimeout(nextChatMessage, 1500);
+          schedule(nextChatMessage, 1500);
         }, 4000);
         return;
       }
 
       setVisibleAlert(alertIdx);
-      // Trigger browser daily brief when the "Daily Brief" alert appears (index 3)
       if (alertIdx === 3 && onDailyBriefAlert) {
         onDailyBriefAlert();
       }
       alertIdx++;
-      // Slower alert cycling -- 4 seconds per alert
-      timeout = setTimeout(runAlerts, 4000);
+      schedule(runAlerts, 4000);
     }
 
-    timeout = setTimeout(nextChatMessage, 1200);
+    schedule(nextChatMessage, 1200);
 
-    return () => clearTimeout(timeout);
+    return () => timeouts.forEach(clearTimeout);
   }, [prefersReducedMotion, onDailyBriefAlert]);
 
   return (
