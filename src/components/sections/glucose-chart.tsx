@@ -281,7 +281,7 @@ export function GlucoseChartSection() {
         </h2>
         <p className="mx-auto max-w-2xl text-muted-foreground">
           Interactive demo built with the same technology powering the platform.
-          Switch time periods and hover to explore the data.
+          Hover over the chart to explore 24 hours of glucose, insulin, and basal data.
         </p>
       </div>
 
@@ -308,19 +308,19 @@ export function GlucoseChartSection() {
           <div className="mt-4 flex items-center justify-center gap-6 text-center text-xs sm:gap-10 sm:text-sm">
             <div className="border-r border-border pr-6 sm:pr-10">
               <div className="font-medium text-muted-foreground">IOB</div>
-              <div className="font-semibold">2.1u</div>
+              <div className="font-semibold">0.45u</div>
             </div>
             <div className="border-r border-border pr-6 sm:pr-10">
               <div className="font-medium text-muted-foreground">BASAL</div>
-              <div className="font-semibold">4.37 u/hr</div>
+              <div className="font-semibold">{basalLineData.length > 0 ? basalLineData[basalLineData.length - 1].rate.toFixed(2) : "0.85"} u/hr</div>
             </div>
             <div className="border-r border-border pr-6 sm:pr-10">
               <div className="font-medium text-muted-foreground">BATTERY</div>
-              <div className="font-semibold">35%</div>
+              <div className="font-semibold">72%</div>
             </div>
             <div>
               <div className="font-medium text-muted-foreground">RESERVOIR</div>
-              <div className="font-semibold">235u</div>
+              <div className="font-semibold">185u</div>
             </div>
           </div>
         </div>

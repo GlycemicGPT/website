@@ -23,10 +23,11 @@ export function AnimatedSection({
   return (
     <motion.section
       className={className}
-      initial={{ opacity: 0, y: 30 }}
+      style={{ willChange: "opacity, transform" }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+      transition={{ duration: 0.4, delay, ease: "easeOut" }}
     >
       {children}
     </motion.section>

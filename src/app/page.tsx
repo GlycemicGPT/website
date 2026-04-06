@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer";
 import { HeroSection } from "@/components/sections/hero";
 import { FeaturesSection } from "@/components/sections/features";
 import { ConnectSection } from "@/components/sections/connect";
+import { DemoShowcaseSection } from "@/components/sections/demo-showcase";
 import { ArchitectureSection } from "@/components/sections/architecture";
 import { StatsSection } from "@/components/sections/stats";
 import { GettingStartedSection } from "@/components/sections/getting-started";
@@ -28,6 +29,7 @@ export default function Home() {
         <FeaturesSection />
         <ConnectSection />
         <GlucoseChartSection />
+        <DemoShowcaseSection />
         <ArchitectureSection />
         <StatsSection />
         <GettingStartedSection />

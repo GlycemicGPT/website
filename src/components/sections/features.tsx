@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import {
   Bluetooth,
   Brain,
@@ -65,8 +64,6 @@ const features = [
 ];
 
 export function FeaturesSection() {
-  const prefersReducedMotion = useReducedMotion();
-
   return (
     <AnimatedSection
       className="mx-auto max-w-6xl px-4 py-24 sm:px-6"
@@ -82,22 +79,17 @@ export function FeaturesSection() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {features.map((feature, i) => (
-          <motion.div
+        {features.map((feature) => (
+          <div
             key={feature.title}
-            className="group rounded-xl border border-border bg-card p-6 transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
-            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ delay: i * 0.06, duration: 0.4 }}
-            whileHover={prefersReducedMotion ? {} : { y: -2 }}
+            className="rounded-xl border border-border bg-card p-6 transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
           >
             <feature.icon className="mb-3 h-6 w-6 text-primary" />
             <h3 className="mb-2 text-sm font-semibold">{feature.title}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {feature.description}
             </p>
-          </motion.div>
+          </div>
         ))}
       </div>
     </AnimatedSection>
