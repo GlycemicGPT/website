@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-04-06
+
+### 📚 Documentation
+
+- feat: Lighthouse PR comments and CONTRIBUTING.md rewrite [@jlengelbrecht](https://github.com/jlengelbrecht) ([#5](https://github.com/GlycemicGPT/website/pull/5))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#6](https://github.com/GlycemicGPT/website/pull/6))
+
+<!-- changelog-cutoff:2026-04-06T02:44:03Z -->
+
+
 ## 2026-04-05
 
 ### 📚 Documentation
