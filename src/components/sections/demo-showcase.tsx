@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { AnimatedSection } from "@/components/animated-section";
 import { PhoneDemo } from "./phone-demo";
+import { WatchDemo } from "./watch-demo";
 import { BrowserDemo } from "./browser-demo";
 
 export function DemoShowcaseSection() {
@@ -19,19 +20,28 @@ export function DemoShowcaseSection() {
           See the Platform in Action
         </h2>
         <p className="mx-auto max-w-2xl text-muted-foreground">
-          Manage diabetes from your phone or the web. AI-powered insights,
-          real-time alerts, and daily briefs -- wherever you are.
+          Manage diabetes from your phone, your wrist, or the web. AI-powered
+          insights, real-time alerts, and daily briefs -- wherever you are.
         </p>
       </div>
 
-      <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-start lg:justify-center lg:gap-12">
+      <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-start lg:justify-center lg:gap-8">
         {/* Phone demo: AI Chat + Caregiver Alerts */}
         <div className="flex flex-col items-center gap-3">
           <PhoneDemo onDailyBriefAlert={onDailyBriefAlert} />
           <p className="text-sm font-semibold">Your Pocket Endo</p>
-          <p className="max-w-[280px] text-center text-xs text-muted-foreground">
+          <p className="max-w-[260px] text-center text-xs text-muted-foreground">
             AI chat, predictive insights, and caregiver alerts -- all from your
             phone.
+          </p>
+        </div>
+
+        {/* Watch demo: BG + Alerts + AI Chat cycling */}
+        <div className="flex flex-col items-center gap-3">
+          <WatchDemo />
+          <p className="text-sm font-semibold">Glance &amp; Go</p>
+          <p className="max-w-[180px] text-center text-xs text-muted-foreground">
+            BG, trends, alerts, and AI chat on your wrist.
           </p>
         </div>
 
