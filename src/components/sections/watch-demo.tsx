@@ -68,29 +68,56 @@ function WatchFaceScreen({ state }: { state: WatchState }) {
         IoB: {state.iob} u
       </span>
 
-      {/* Mini glucose graph -- actual dot trend like the main chart */}
-      <div className="relative w-[82%] mt-1.5 h-[22px] rounded-md overflow-hidden">
-        {/* Background with target range band */}
-        <div className="absolute inset-0 bg-zinc-900" />
-        <div className="absolute inset-x-0 top-[30%] bottom-[20%] bg-green-900/30" />
-        {/* Graph dots -- SVG mini scatter plot */}
-        <svg viewBox="0 0 100 30" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-          {/* Target range lines */}
-          <line x1="0" y1="8" x2="100" y2="8" stroke="#F59E0B" strokeWidth="0.3" strokeOpacity="0.3" strokeDasharray="2 2" />
-          <line x1="0" y1="22" x2="100" y2="22" stroke="#F59E0B" strokeWidth="0.3" strokeOpacity="0.3" strokeDasharray="2 2" />
-          {/* Glucose dots showing a trend pattern */}
+      {/* Mini glucose graph -- matches WatchGraphRenderer (400x100 aspect ratio) */}
+      <div className="relative w-[85%] mt-1.5 h-[28px] rounded overflow-hidden">
+        <svg viewBox="0 0 100 25" className="w-full h-full" preserveAspectRatio="none">
+          {/* Target range band (green, low alpha) */}
+          <rect x="0" y="5" width="100" height="13" fill="#22C55E" fillOpacity="0.12" />
+          {/* Threshold dashed lines */}
+          <line x1="0" y1="5" x2="100" y2="5" stroke="white" strokeWidth="0.3" strokeOpacity="0.3" strokeDasharray="1.5 1.5" />
+          <line x1="0" y1="18" x2="100" y2="18" stroke="white" strokeWidth="0.3" strokeOpacity="0.3" strokeDasharray="1.5 1.5" />
+
+          {/* Basal area at bottom (teal, stepped) */}
+          <rect x="0" y="22" width="30" height="3" fill="#00BCD4" fillOpacity="0.15" />
+          <line x1="0" y1="22" x2="30" y2="22" stroke="#00BCD4" strokeWidth="0.4" strokeOpacity="0.6" />
+          <rect x="30" y="21" width="40" height="4" fill="#00BCD4" fillOpacity="0.15" />
+          <line x1="30" y1="21" x2="70" y2="21" stroke="#00BCD4" strokeWidth="0.4" strokeOpacity="0.6" />
+          <rect x="70" y="22.5" width="30" height="2.5" fill="#00BCD4" fillOpacity="0.15" />
+          <line x1="70" y1="22.5" x2="100" y2="22.5" stroke="#00BCD4" strokeWidth="0.4" strokeOpacity="0.6" />
+
+          {/* IoB area (blue fill at bottom, overlapping basal) */}
+          <path
+            d="M0,25 L0,22 L15,21 L30,20 L50,21.5 L70,22 L85,23 L100,24 L100,25 Z"
+            fill="#42A5F5" fillOpacity="0.15"
+          />
+          <path
+            d="M0,22 L15,21 L30,20 L50,21.5 L70,22 L85,23 L100,24"
+            fill="none" stroke="#42A5F5" strokeWidth="0.5" strokeOpacity="0.8"
+          />
+
+          {/* Glucose line + dots */}
           {state.phase === "rising" || state.phase === "alert" ? (
-            /* Rising/high pattern */
             <>
-              {[[5,20],[10,19],[15,18],[20,16],[25,15],[30,14],[35,13],[40,12],[42,11],[48,10],[53,9],[58,8],[63,7],[68,6],[73,5],[78,5],[83,4],[88,4],[93,3]].map(([x,y], i) => (
-                <circle key={i} cx={x} cy={y} r="1.2" fill={y < 8 ? "#F59E0B" : y < 5 ? "#EF4444" : "#22C55E"} />
+              {/* Rising pattern -- glucose line */}
+              <polyline
+                points="3,15 10,14 18,13 25,12 33,11 40,10 48,9 55,8 63,6 70,5 78,4 85,4 93,3"
+                fill="none" stroke="#22C55E" strokeWidth="0.4" strokeOpacity="0.6"
+              />
+              {/* Dots colored by range */}
+              {[[3,15],[10,14],[18,13],[25,12],[33,11],[40,10],[48,9],[55,8],[63,6],[70,5],[78,4],[85,4],[93,3]].map(([x,y], i) => (
+                <circle key={i} cx={x} cy={y} r="1" fill={y <= 5 ? "#EF4444" : y <= 8 ? "#F59E0B" : "#22C55E"} />
               ))}
             </>
           ) : (
-            /* In-range / stable pattern */
             <>
-              {[[5,16],[10,15],[15,14],[20,15],[25,16],[30,14],[35,13],[40,14],[42,15],[48,14],[53,13],[58,14],[63,15],[68,14],[73,13],[78,14],[83,15],[88,14],[93,15]].map(([x,y], i) => (
-                <circle key={i} cx={x} cy={y} r="1.2" fill="#22C55E" />
+              {/* Stable in-range pattern -- glucose line */}
+              <polyline
+                points="3,12 10,11 18,12 25,13 33,11 40,12 48,11 55,12 63,13 70,12 78,11 85,12 93,11"
+                fill="none" stroke="#22C55E" strokeWidth="0.4" strokeOpacity="0.6"
+              />
+              {/* All green dots (in range) */}
+              {[[3,12],[10,11],[18,12],[25,13],[33,11],[40,12],[48,11],[55,12],[63,13],[70,12],[78,11],[85,12],[93,11]].map(([x,y], i) => (
+                <circle key={i} cx={x} cy={y} r="1" fill="#22C55E" />
               ))}
             </>
           )}
