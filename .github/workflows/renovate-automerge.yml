@@ -1,0 +1,58 @@
+name: Renovate Auto-Approve
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  auto-approve:
+    name: Approve & Enable Auto-Merge
+    runs-on: ubuntu-latest
+    # Only run for Renovate PRs (use PR author, not actor, so reopens by maintainers still trigger)
+    if: github.event.pull_request.user.login == 'glycemicgpt-renovate[bot]'
+    permissions: {}
+
+    steps:
+      - name: Generate token for glycemicgpt-merge
+        id: merge-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.MERGE_APP_ID }}
+          private-key: ${{ secrets.MERGE_APP_PRIVATE_KEY }}
+
+      - name: Validate PR is from Renovate
+        env:
+          GH_TOKEN: ${{ steps.merge-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          PR_DATA=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json author,headRefName)
+          PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
+          PR_BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
+
+          if [ "$PR_AUTHOR" != "glycemicgpt-renovate[bot]" ] && [ "$PR_AUTHOR" != "app/glycemicgpt-renovate" ]; then
+            echo "::error::PR author is not Renovate: $PR_AUTHOR"
+            exit 1
+          fi
+
+          if [[ "$PR_BRANCH" != renovate/* ]]; then
+            echo "::error::PR branch does not match renovate prefix: $PR_BRANCH"
+            exit 1
+          fi
+
+          echo "Validated: PR #$PR_NUMBER by $PR_AUTHOR on branch $PR_BRANCH"
+
+      - name: Approve PR
+        env:
+          GH_TOKEN: ${{ steps.merge-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr review "$PR_NUMBER" --approve --repo ${{ github.repository }}
+
+      - name: Enable auto-merge
+        env:
+          GH_TOKEN: ${{ steps.merge-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr merge "$PR_NUMBER" --auto --squash --repo ${{ github.repository }}
