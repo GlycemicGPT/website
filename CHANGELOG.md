@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-04-11
+
+### 🌐 Website
+
+#### ✨ New Features
+
+- feat: add logo, favicons, and AI chat demo section [@jlengelbrecht](https://github.com/jlengelbrecht) ([#8](https://github.com/GlycemicGPT/website/pull/8))
+
+#### 🐛 Bug Fixes
+
+- fix: mobile architecture view, remove AI tool files, fix dot animations [@jlengelbrecht](https://github.com/jlengelbrecht) ([#12](https://github.com/GlycemicGPT/website/pull/12))
+- fix: align CONTRIBUTING.md with main repo and add CodeRabbit section [@jlengelbrecht](https://github.com/jlengelbrecht) ([#11](https://github.com/GlycemicGPT/website/pull/11))
+- fix: improve light mode border contrast [@jlengelbrecht](https://github.com/jlengelbrecht) ([#10](https://github.com/GlycemicGPT/website/pull/10))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#9](https://github.com/GlycemicGPT/website/pull/9))
+
+<!-- changelog-cutoff:2026-04-11T04:14:33Z -->
+
+
 ## 2026-04-06
 
 ### 📚 Documentation
