@@ -74,11 +74,23 @@ function NodeCard({ label, sublabel, icon: Icon, index, prefersReducedMotion }: 
   );
 }
 
-/** AI Engine module -- larger card containing Brain + RAG Data Store with internal connector */
-function AIEngineModule({ prefersReducedMotion }: { prefersReducedMotion: boolean | null }) {
+/** AI Engine module -- shared between desktop and mobile with compact prop for sizing */
+function AIEngineModule({
+  prefersReducedMotion,
+  compact = false,
+}: {
+  prefersReducedMotion: boolean | null;
+  compact?: boolean;
+}) {
+  const cardMin = compact ? "min-w-[100px]" : "min-w-[120px]";
+  const cardPx = compact ? "px-3 py-3" : "px-4 py-3";
+  const connectorW = compact ? "w-12" : "w-20";
+  const connectorGap = compact ? "gap-2 px-1.5" : "gap-2.5 px-2";
+  const outerPx = compact ? "px-5 py-4" : "px-6 py-5";
+
   return (
     <motion.div
-      className="rounded-2xl border border-primary/20 bg-card/50 px-6 py-5"
+      className={`rounded-2xl border border-primary/20 bg-card/50 ${outerPx}`}
       initial={prefersReducedMotion ? {} : { opacity: 0, y: 15 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -88,31 +100,26 @@ function AIEngineModule({ prefersReducedMotion }: { prefersReducedMotion: boolea
         AI Engine
       </div>
       <div className="flex items-center gap-0">
-        {/* Brain / Analysis */}
-        <div className="flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-3 text-center min-w-[120px]">
+        <div className={`flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card ${cardPx} text-center ${cardMin}`}>
           <Brain className="h-5 w-5 text-primary" />
           <div className="text-xs font-semibold">Analysis</div>
           <div className="text-[10px] text-muted-foreground">5 Provider Types</div>
         </div>
 
-        {/* Bidirectional connector: two lines with data-type icons flowing each direction */}
-        <div className="flex flex-col items-center justify-center gap-2.5 px-2">
-          {/* Line 1: Analysis → Knowledge Base (queries + health context) */}
-          <div className="relative h-4 w-20 overflow-hidden">
+        <div className={`flex flex-col items-center justify-center ${connectorGap}`}>
+          <div className={`relative h-4 ${connectorW} overflow-hidden`}>
             <div className="absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 bg-border" />
             <HelpCircle className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-primary animate-icon-right" style={{ animationDelay: "0s" }} />
             <Droplets className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-red-400 animate-icon-right" style={{ animationDelay: "1.5s" }} />
           </div>
-          {/* Line 2: Knowledge Base → Analysis (docs + insights) */}
-          <div className="relative h-4 w-20 overflow-hidden">
+          <div className={`relative h-4 ${connectorW} overflow-hidden`}>
             <div className="absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 bg-border" />
             <FileText className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-primary animate-icon-left" style={{ animationDelay: "0.5s" }} />
             <Lightbulb className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-amber-400 animate-icon-left" style={{ animationDelay: "2s" }} />
           </div>
         </div>
 
-        {/* RAG Data Store */}
-        <div className="flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-3 text-center min-w-[120px]">
+        <div className={`flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card ${cardPx} text-center ${cardMin}`}>
           <Database className="h-5 w-5 text-primary" />
           <div className="text-xs font-semibold">Knowledge Base</div>
           <div className="text-[10px] text-muted-foreground">RAG + Vector Search</div>
@@ -173,29 +180,14 @@ export function ArchitectureSection() {
               index={i}
               prefersReducedMotion={prefersReducedMotion}
             />
-            {i < mainFlow.length - 1 && <ConnectorArrow vertical />}
-            {/* Show AI Engine module branching off Platform Core on mobile */}
+            {/* Show connector arrow -- skip between backend and web since AI Engine goes between them */}
+            {i < mainFlow.length - 1 && node.id !== "backend" && <ConnectorArrow vertical />}
+            {/* Show AI Engine module between Platform Core and Web Dashboard on mobile */}
             {node.id === "backend" && (
-              <div className="my-3">
-                <div className="flex justify-center mb-1">
-                  <div className="h-4 w-px bg-border" />
-                </div>
-                <div className="rounded-2xl border border-primary/20 bg-card/50 px-4 py-4">
-                  <div className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-primary">
-                    AI Engine
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-center">
-                      <Brain className="h-4 w-4 text-primary" />
-                      <div className="text-[10px] font-semibold">Analysis</div>
-                    </div>
-                    <div className="h-px w-4 bg-border" />
-                    <div className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-center">
-                      <Database className="h-4 w-4 text-primary" />
-                      <div className="text-[10px] font-semibold">Knowledge</div>
-                    </div>
-                  </div>
-                </div>
+              <div className="my-0">
+                <ConnectorArrow vertical />
+                <AIEngineModule compact prefersReducedMotion={prefersReducedMotion} />
+                <ConnectorArrow vertical />
               </div>
             )}
           </div>

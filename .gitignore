@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI coding tool config files
+CLAUDE.md
+AGENTS.md
+.claude/
+.cursor/
+.windsurf/
+.aider*
+.codeium/
+
+# Docs sync cache (generated at build time)
+.docs-cache/
+
+# Lighthouse reports
+lighthouse-report.json
