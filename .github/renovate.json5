@@ -30,23 +30,16 @@
   },
   "packageRules": [
     {
-      "description": "Auto-merge patch and minor updates",
-      "matchUpdateTypes": ["patch", "minor"],
+      "description": "Auto-merge all dependency updates (CI gates protect against breakage)",
+      "matchPackageNames": ["*"],
       "automerge": true,
-      "automergeType": "pr",
-      "matchPackageNames": ["*"]
+      "automergeType": "pr"
     },
     {
       "description": "Auto-merge lockfile maintenance",
       "matchUpdateTypes": ["lockFileMaintenance"],
       "automerge": true,
       "automergeType": "pr"
-    },
-    {
-      "description": "Require manual review for major updates",
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "labels": ["dependencies", "major"]
     },
     {
       "description": "Group TypeScript type definitions",
@@ -74,19 +67,11 @@
       "groupName": "Recharts"
     },
     {
-      "description": "Auto-merge GitHub Actions patch and minor updates",
+      "description": "Group GitHub Actions updates",
       "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "GitHub Actions",
       "automerge": true,
       "automergeType": "pr"
-    },
-    {
-      "description": "Group GitHub Actions major updates for manual review",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "groupName": "GitHub Actions major updates",
-      "labels": ["dependencies", "ci", "major"]
     }
   ]
 }
