@@ -4,6 +4,33 @@
 
 ### 🌐 Website
 
+#### 🐛 Bug Fixes
+
+- fix: mobile glucose chart layout overflow and clipped bolus labels [@jlengelbrecht](https://github.com/jlengelbrecht) ([#18](https://github.com/GlycemicGPT/website/pull/18))
+- fix: mobile architecture view, remove AI tool files, fix dot animations [@jlengelbrecht](https://github.com/jlengelbrecht) ([#12](https://github.com/GlycemicGPT/website/pull/12))
+
+### 🏗️ Infrastructure
+
+#### 🐛 Bug Fixes
+
+- fix(deps): remove schedule restrictions and fix timezone for Renovate [@jlengelbrecht](https://github.com/jlengelbrecht) ([#17](https://github.com/GlycemicGPT/website/pull/17))
+
+#### 📝 Other Changes
+
+- chore(deps): enable full Renovate automerge with merge bot approval [@jlengelbrecht](https://github.com/jlengelbrecht) ([#16](https://github.com/GlycemicGPT/website/pull/16))
+- ci: upgrade GitHub Actions to Node.js 24 and add Renovate workflow [@jlengelbrecht](https://github.com/jlengelbrecht) ([#14](https://github.com/GlycemicGPT/website/pull/14))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#13](https://github.com/GlycemicGPT/website/pull/13))
+
+<!-- changelog-cutoff:2026-04-11T19:50:22Z -->
+
+
+## 2026-04-11
+
+### 🌐 Website
+
 #### ✨ New Features
 
 - feat: add logo, favicons, and AI chat demo section [@jlengelbrecht](https://github.com/jlengelbrecht) ([#8](https://github.com/GlycemicGPT/website/pull/8))
