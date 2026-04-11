@@ -177,25 +177,40 @@ export function ArchitectureSection() {
             {/* Show AI Engine module branching off Platform Core on mobile */}
             {node.id === "backend" && (
               <div className="my-3">
-                <div className="flex justify-center mb-1">
-                  <div className="h-4 w-px bg-border" />
-                </div>
-                <div className="rounded-2xl border border-primary/20 bg-card/50 px-4 py-4">
-                  <div className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-primary">
+                <ConnectorArrow vertical />
+                <div className="rounded-2xl border border-primary/20 bg-card/50 px-5 py-4">
+                  <div className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-primary">
                     AI Engine
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-center">
-                      <Brain className="h-4 w-4 text-primary" />
-                      <div className="text-[10px] font-semibold">Analysis</div>
+                  <div className="flex items-center gap-0">
+                    <div className="flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-3 text-center min-w-[100px]">
+                      <Brain className="h-5 w-5 text-primary" />
+                      <div className="text-xs font-semibold">Analysis</div>
+                      <div className="text-[10px] text-muted-foreground">5 Provider Types</div>
                     </div>
-                    <div className="h-px w-4 bg-border" />
-                    <div className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-center">
-                      <Database className="h-4 w-4 text-primary" />
-                      <div className="text-[10px] font-semibold">Knowledge</div>
+
+                    {/* Bidirectional connector with data-type icons */}
+                    <div className="flex flex-col items-center justify-center gap-2 px-1.5">
+                      <div className="relative h-4 w-12 overflow-hidden">
+                        <div className="absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 bg-border" />
+                        <HelpCircle className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-primary animate-icon-right" style={{ animationDelay: "0s" }} />
+                        <Droplets className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-red-400 animate-icon-right" style={{ animationDelay: "1.5s" }} />
+                      </div>
+                      <div className="relative h-4 w-12 overflow-hidden">
+                        <div className="absolute top-1/2 left-0 right-0 h-px -translate-y-1/2 bg-border" />
+                        <FileText className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-primary animate-icon-left" style={{ animationDelay: "0.5s" }} />
+                        <Lightbulb className="absolute top-1/2 -translate-y-1/2 h-3 w-3 text-amber-400 animate-icon-left" style={{ animationDelay: "2s" }} />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-3 text-center min-w-[100px]">
+                      <Database className="h-5 w-5 text-primary" />
+                      <div className="text-xs font-semibold">Knowledge Base</div>
+                      <div className="text-[10px] text-muted-foreground">RAG + Vector Search</div>
                     </div>
                   </div>
                 </div>
+                <ConnectorArrow vertical />
               </div>
             )}
           </div>
