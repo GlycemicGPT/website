@@ -173,10 +173,11 @@ export function ArchitectureSection() {
               index={i}
               prefersReducedMotion={prefersReducedMotion}
             />
-            {i < mainFlow.length - 1 && <ConnectorArrow vertical />}
-            {/* Show AI Engine module branching off Platform Core on mobile */}
+            {/* Show connector arrow -- skip between backend and web since AI Engine goes between them */}
+            {i < mainFlow.length - 1 && node.id !== "backend" && <ConnectorArrow vertical />}
+            {/* Show AI Engine module between Platform Core and Web Dashboard on mobile */}
             {node.id === "backend" && (
-              <div className="my-3">
+              <div className="my-0">
                 <ConnectorArrow vertical />
                 <div className="rounded-2xl border border-primary/20 bg-card/50 px-5 py-4">
                   <div className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-primary">
