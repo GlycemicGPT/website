@@ -305,16 +305,16 @@ export function GlucoseChartSection() {
             <ArrowRight className="h-8 w-8" style={{ color: getRangeColor(currentValue) }} />
           </div>
           <div className="mt-1 text-center text-sm text-muted-foreground">mg/dL</div>
-          <div className="mt-4 flex items-center justify-center gap-6 text-center text-xs sm:gap-10 sm:text-sm">
-            <div className="border-r border-border pr-6 sm:pr-10">
+          <div className="mt-4 grid grid-cols-2 gap-3 text-center text-xs sm:flex sm:items-center sm:justify-center sm:gap-10 sm:text-sm">
+            <div className="sm:border-r sm:border-border sm:pr-10">
               <div className="font-medium text-muted-foreground">IOB</div>
               <div className="font-semibold">0.45u</div>
             </div>
-            <div className="border-r border-border pr-6 sm:pr-10">
+            <div className="sm:border-r sm:border-border sm:pr-10">
               <div className="font-medium text-muted-foreground">BASAL</div>
               <div className="font-semibold">{basalLineData.length > 0 ? basalLineData[basalLineData.length - 1].rate.toFixed(2) : "0.85"} u/hr</div>
             </div>
-            <div className="border-r border-border pr-6 sm:pr-10">
+            <div className="sm:border-r sm:border-border sm:pr-10">
               <div className="font-medium text-muted-foreground">BATTERY</div>
               <div className="font-semibold">72%</div>
             </div>
@@ -326,12 +326,12 @@ export function GlucoseChartSection() {
         </div>
 
         {/* Chart header */}
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold">Glucose Trend</span>
-            <span className="text-xs text-muted-foreground">Drag chart to zoom</span>
+            <span className="hidden text-xs text-muted-foreground sm:inline">Drag chart to zoom</span>
           </div>
-          <div className="flex gap-0.5">
+          <div className="flex flex-wrap gap-0.5">
             {PERIODS.map((p, i) => (
               <span
                 key={p.label}
@@ -346,9 +346,9 @@ export function GlucoseChartSection() {
         </div>
 
         {/* Chart */}
-        <div className="h-64 w-full sm:h-80">
+        <div className="h-72 w-full sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart margin={{ top: 10, right: 30, left: -15, bottom: 0 }}>
+            <ComposedChart margin={{ top: 25, right: 15, left: -20, bottom: 0 }}>
               {/* Target range shading */}
               <ReferenceArea yAxisId="glucose" y1={70} y2={180} fill="#22C55E" fillOpacity={0.06} />
 
