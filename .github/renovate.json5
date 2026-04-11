@@ -18,12 +18,12 @@
   "internalChecksFilter": "strict",
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["before 9am on monday"]
+    "schedule": ["before 9am on saturday"]
   },
   "labels": ["dependencies"],
   "ignorePaths": ["**/node_modules/**"],
-  "timezone": "America/Chicago",
-  "schedule": ["after 9am and before 5pm every weekday"],
+  "timezone": "America/New_York",
+  "schedule": ["at any time"],
   "vulnerabilityAlerts": {
     "enabled": true,
     "labels": ["security", "dependencies"],
