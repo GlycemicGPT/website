@@ -37,6 +37,12 @@
       "automergeType": "pr"
     },
     {
+      "description": "Label major updates for post-merge auditing",
+      "matchUpdateTypes": ["major"],
+      "labels": ["dependencies", "major"],
+      "prBodyNotes": ["**This is a major version bump.** Check the changelog for breaking changes."]
+    },
+    {
       "description": "Auto-merge lockfile maintenance",
       "matchUpdateTypes": ["lockFileMaintenance"],
       "automerge": true,

@@ -10,8 +10,8 @@ jobs:
   auto-approve:
     name: Approve & Enable Auto-Merge
     runs-on: ubuntu-latest
-    # Only run for Renovate PRs
-    if: github.actor == 'glycemicgpt-renovate[bot]'
+    # Only run for Renovate PRs (use PR author, not actor, so reopens by maintainers still trigger)
+    if: github.event.pull_request.user.login == 'glycemicgpt-renovate[bot]'
     permissions: {}
 
     steps:
