@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-04-12
+
+### 🌐 Website
+
+#### 🐛 Bug Fixes
+
+- fix: mobile glucose chart layout overflow and clipped bolus labels [@jlengelbrecht](https://github.com/jlengelbrecht) ([#18](https://github.com/GlycemicGPT/website/pull/18))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#19](https://github.com/GlycemicGPT/website/pull/19))
+
+<!-- changelog-cutoff:2026-04-12T02:55:20Z -->
+
+
 ## 2026-04-11
 
 ### 🌐 Website
