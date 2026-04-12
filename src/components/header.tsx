@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { GitHubIcon } from "./icons";
+import { DiscordIcon, GitHubIcon } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
 
 const navLinks = [
   { label: "Features", href: "#features" },
   { label: "Platform", href: "#platform" },
   { label: "Getting Started", href: "#getting-started" },
+  { label: "Discord", href: "https://discord.gg/TJKzjsts", external: true },
   { label: "GitHub", href: "https://github.com/GlycemicGPT/GlycemicGPT", external: true },
 ];
 
@@ -50,6 +51,7 @@ export function Header() {
               className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.label === "GitHub" && <GitHubIcon className="h-4 w-4" />}
+              {link.label === "Discord" && <DiscordIcon className="h-4 w-4" />}
               {link.label}
             </a>
           ))}

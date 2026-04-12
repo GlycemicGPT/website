@@ -1,4 +1,4 @@
-import { GitHubIcon } from "./icons";
+import { DiscordIcon, GitHubIcon } from "./icons";
 
 export function Footer() {
   return (
@@ -26,6 +26,17 @@ export function Footer() {
                 >
                   <GitHubIcon className="h-3.5 w-3.5" />
                   GitHub
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://discord.gg/TJKzjsts"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <DiscordIcon className="h-3.5 w-3.5" />
+                  Discord
                 </a>
               </li>
               <li>
