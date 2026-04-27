@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-04-27
+
+### 🌐 Website
+
+#### ✨ New Features
+
+- feat: add Discord community link to header and footer [@jlengelbrecht](https://github.com/jlengelbrecht) ([#20](https://github.com/GlycemicGPT/website/pull/20))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#21](https://github.com/GlycemicGPT/website/pull/21))
+
+<!-- changelog-cutoff:2026-04-27T07:08:30Z -->
+
+
 ## 2026-04-12
 
 ### 🌐 Website
