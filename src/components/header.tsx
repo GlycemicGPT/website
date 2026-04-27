@@ -10,7 +10,7 @@ const navLinks = [
   { label: "Features", href: "#features" },
   { label: "Platform", href: "#platform" },
   { label: "Getting Started", href: "#getting-started" },
-  { label: "Discord", href: "https://discord.gg/TJKzjsts", external: true },
+  { label: "Discord", href: "https://discord.gg/QbyhCQKDBs", external: true },
   { label: "GitHub", href: "https://github.com/GlycemicGPT/GlycemicGPT", external: true },
 ];
 
