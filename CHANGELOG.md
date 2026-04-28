@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-04-28
+
+### 🌐 Website
+
+#### 🐛 Bug Fixes
+
+- fix: update expired Discord invite link [@jlengelbrecht](https://github.com/jlengelbrecht) ([#22](https://github.com/GlycemicGPT/website/pull/22))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#23](https://github.com/GlycemicGPT/website/pull/23))
+
+<!-- changelog-cutoff:2026-04-28T04:40:57Z -->
+
+
 ## 2026-04-27
 
 ### 🌐 Website
