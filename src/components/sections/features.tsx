@@ -59,7 +59,7 @@ const features = [
     icon: Code,
     title: "Open Source",
     description:
-      "AGPL-3.0 licensed. Full source code, community-driven development, plugin architecture for extensibility.",
+      "GPL-3.0 licensed. Full source code, community-driven development, plugin architecture for extensibility.",
   },
 ];
 

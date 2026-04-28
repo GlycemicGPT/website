@@ -27,4 +27,4 @@ Static output is generated in `./out/` for GitHub Pages deployment.
 
 ## License
 
-AGPL-3.0 - see [LICENSE](LICENSE)
+GPL-3.0 - see [LICENSE](LICENSE)
