@@ -56,7 +56,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  License (AGPL-3.0)
+                  License (GPL-3.0)
                 </a>
               </li>
             </ul>
@@ -76,7 +76,7 @@ export function Footer() {
 
         <div className="mt-8 border-t border-border pt-6">
           <p className="text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} GlycemicGPT. Open source under AGPL-3.0.
+            &copy; {new Date().getFullYear()} GlycemicGPT. Open source under GPL-3.0.
           </p>
         </div>
       </div>
