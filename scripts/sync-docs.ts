@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Pulls docs from configured source repos at build time.
  *
@@ -92,10 +91,20 @@ async function downloadTarball(repo: string, branch: string): Promise<string> {
     throw new Error(`Failed to download tarball: ${res.status} ${res.statusText}`);
   }
 
-  await pipeline(
-    Readable.fromWeb(res.body as never),
-    createWriteStream(cachePath),
-  );
+  // Write to a tmp path and atomically rename so a partial download doesn't
+  // leave a truncated tarball that the cache treats as valid for 5 minutes.
+  const tmpPath = `${cachePath}.tmp`;
+  try {
+    await pipeline(
+      Readable.fromWeb(res.body as never),
+      createWriteStream(tmpPath),
+    );
+    const { rename } = await import("node:fs/promises");
+    await rename(tmpPath, cachePath);
+  } catch (err) {
+    if (existsSync(tmpPath)) await rm(tmpPath, { force: true });
+    throw err;
+  }
   return cachePath;
 }
 
@@ -105,20 +114,23 @@ async function extractDocs(
   targetDir: string,
 ): Promise<void> {
   // GitHub tarballs have a top-level dir like "owner-repo-<sha>/".
-  // We strip that, then keep only docsPath/.
-  const docsPrefix = source.docsPath.replace(/\/$/, "");
+  // We strip that plus every segment of docsPath so files land directly under
+  // targetDir. Supports nested docsPath values like "apps/web/docs".
+  const docsPrefix = source.docsPath.replace(/^\/+|\/+$/g, "");
+  const docsPrefixParts = docsPrefix.split("/");
+  const strip = 1 + docsPrefixParts.length;
   await mkdir(targetDir, { recursive: true });
 
   await pipeline(
     createReadStream(tarballPath),
     tar.x({
       cwd: targetDir,
-      strip: 2, // strip top dir + docs/
+      strip,
       filter: (entryPath) => {
-        // entryPath looks like "owner-repo-sha/docs/foo.md"
+        // entryPath looks like "owner-repo-sha/<docsPath>/foo.md"
         const parts = entryPath.split("/");
-        if (parts.length < 2) return false;
-        return parts[1] === docsPrefix;
+        if (parts.length <= strip) return false;
+        return parts.slice(1, strip).join("/") === docsPrefix;
       },
     }),
   );

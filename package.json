@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "sync-docs": "tsx scripts/sync-docs.ts",
-    "predev": "npm run sync-docs",
-    "prebuild": "npm run sync-docs",
+    "predev": "npm run sync-docs && npx fumadocs-mdx",
+    "prebuild": "npm run sync-docs && npx fumadocs-mdx",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
