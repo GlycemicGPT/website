@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-04-30
+
+### 🌐 Website
+
+#### ✨ New Features
+
+- feat: docs aggregation site with cross-repo sync [@jlengelbrecht](https://github.com/jlengelbrecht) ([#26](https://github.com/GlycemicGPT/website/pull/26))
+
+#### 🐛 Bug Fixes
+
+- fix: align website license with main project (AGPL-3.0 -> GPL-3.0) [@jlengelbrecht](https://github.com/jlengelbrecht) ([#24](https://github.com/GlycemicGPT/website/pull/24))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#25](https://github.com/GlycemicGPT/website/pull/25))
+
+<!-- changelog-cutoff:2026-04-30T22:22:53Z -->
+
+
 ## 2026-04-28
 
 ### 🌐 Website
