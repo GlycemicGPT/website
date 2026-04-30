@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { Server, Smartphone, Activity, ArrowRight } from "lucide-react";
 import { AnimatedSection } from "@/components/animated-section";
@@ -73,13 +74,13 @@ export function GettingStartedSection() {
       </div>
 
       <div className="mt-10 text-center">
-        <a
+        <Link
           href="/docs"
           className="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-accent"
         >
           View Full Documentation
           <ArrowRight className="h-4 w-4" />
-        </a>
+        </Link>
       </div>
     </AnimatedSection>
   );
