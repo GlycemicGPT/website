@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-05-02
+
+### 🌐 Website
+
+#### ✨ New Features
+
+- feat: docs aggregation site with cross-repo sync [@jlengelbrecht](https://github.com/jlengelbrecht) ([#26](https://github.com/GlycemicGPT/website/pull/26))
+
+### 📚 Documentation
+
+- fix(docs): resolve relative markdown links to absolute URLs [@jlengelbrecht](https://github.com/jlengelbrecht) ([#31](https://github.com/GlycemicGPT/website/pull/31))
+
+### 🏗️ Infrastructure
+
+#### 🐛 Bug Fixes
+
+- fix(ci): stop configure-pages from overwriting next.config.ts [@jlengelbrecht](https://github.com/jlengelbrecht) ([#29](https://github.com/GlycemicGPT/website/pull/29))
+- fix(ci): explicit sync-docs step in deploy workflows [@jlengelbrecht](https://github.com/jlengelbrecht) ([#28](https://github.com/GlycemicGPT/website/pull/28))
+
+### 📦 Dependencies
+
+- chore(deps): update dependency eslint-config-next to v16.2.4 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#32](https://github.com/GlycemicGPT/website/pull/32))
+- fix(docs): strip .md/.mdx from internal markdown links [@jlengelbrecht](https://github.com/jlengelbrecht) ([#30](https://github.com/GlycemicGPT/website/pull/30))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#27](https://github.com/GlycemicGPT/website/pull/27))
+
+<!-- changelog-cutoff:2026-05-02T07:49:12Z -->
+
+
 ## 2026-04-30
 
 ### 🌐 Website
