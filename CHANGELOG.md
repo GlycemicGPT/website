@@ -2,6 +2,15 @@
 
 ## 2026-05-02
 
+### 📦 Dependencies
+
+- fix(deps): update dependency next to v16.2.4 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#34](https://github.com/GlycemicGPT/website/pull/34))
+
+<!-- changelog-cutoff:2026-05-02T07:49:28Z -->
+
+
+## 2026-05-02
+
 ### 🌐 Website
 
 #### ✨ New Features
