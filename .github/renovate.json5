@@ -90,6 +90,18 @@
       "groupName": "GitHub Actions",
       "automerge": true,
       "automergeType": "pr"
+    },
+    {
+      // cloudflare/wrangler-action is the step in deploy.yml / docs-rebuild.yml /
+      // ci.yml that publishes the production site (and PR previews) to Cloudflare
+      // Pages. A major bump could change CLI flags, output shape, or default
+      // behavior in ways that pass CI but silently change deploy behavior.
+      // Minor/patch bumps still auto-merge; majors require human review.
+      "description": "Require manual review for cloudflare/wrangler-action major bumps",
+      "matchPackageNames": ["cloudflare/wrangler-action"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major", "deploy-critical"]
     }
   ]
 }
