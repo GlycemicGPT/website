@@ -2,6 +2,21 @@
 
 ## 2026-05-13
 
+### 🏗️ Infrastructure
+
+#### ✨ New Features
+
+- feat(ci): migrate hosting from GitHub Pages to Cloudflare Pages [@jlengelbrecht](https://github.com/jlengelbrecht) ([#76](https://github.com/GlycemicGPT/website/pull/76))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#77](https://github.com/GlycemicGPT/website/pull/77))
+
+<!-- changelog-cutoff:2026-05-13T17:32:57Z -->
+
+
+## 2026-05-13
+
 ### 📦 Dependencies
 
 - chore(deps): update dependency tailwind-merge to v3.6.0 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#74](https://github.com/GlycemicGPT/website/pull/74))
