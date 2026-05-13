@@ -263,7 +263,7 @@ When you open a PR from a branch on this repository (not a fork), the CI workflo
 https://pr-<N>.glycemicgpt.pages.dev
 ```
 
-`glycemicgpt-ci[bot]` posts the URL as a comment on your PR. The URL is stable for the lifetime of the PR -- pushing new commits updates the same URL with the latest build. Cloudflare Pages cleans up preview deployments automatically once the PR closes.
+`glycemicgpt-ci[bot]` posts the URL as a comment on your PR. The URL is stable for the lifetime of the PR -- pushing new commits updates the same URL with the latest build. Once the PR is closed (merged or rejected), the `cleanup-preview` workflow immediately deletes the deployments for that PR; a daily `sweep-previews` workflow handles any deployments missed by the on-close cleanup and caps all preview deployments at 30 days regardless of PR state.
 
 **Important notes:**
 
@@ -271,6 +271,7 @@ https://pr-<N>.glycemicgpt.pages.dev
 - Preview deployments display a banner across the top of the page reading "Preview deployment -- not the official GlycemicGPT site". They also emit a `noindex, nofollow` robots meta tag, so search engines do not index preview URLs.
 - **The only official preview hostnames are `pr-N.glycemicgpt.pages.dev` and `<branch>.glycemicgpt.pages.dev` (Cloudflare-issued).** URLs hosted elsewhere claiming to be GlycemicGPT previews are not endorsed by the project.
 - Production lives at `glycemicgpt.org` (Cloudflare Pages). Production builds intentionally do not emit the preview banner or the noindex tag.
+- Previews are not retained indefinitely. The `cleanup-preview` workflow deletes them when the PR is closed; the daily `sweep-previews` workflow catches anything missed and deletes any preview deployment older than 30 days regardless of PR state.
 
 ### Required CI Checks
 

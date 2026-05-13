@@ -1,0 +1,55 @@
+name: Sweep Stale Previews
+
+# Backstop for cleanup-preview.yml. Runs daily and also on-demand. Deletes
+# Cloudflare Pages preview deployments whose corresponding PR is closed, plus
+# any deployment older than the hard age cap (MAX_AGE_DAYS).
+#
+# This catches edge cases the per-PR cleanup misses:
+#   - PRs that were closed before this workflow shipped
+#   - Failed cleanup-preview runs (network blips, API errors)
+#   - Long-lived preview deployments on non-PR branches
+#   - Abandoned branches whose PR was never explicitly closed
+
+on:
+  schedule:
+    # Daily at 05:00 UTC -- chosen to avoid US business hours, late evening in
+    # most of Europe, early morning in Asia. Adjust as appropriate.
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Log what would be deleted without deleting"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sweep-previews
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Sweep stale preview deployments
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run sweep script
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT: glycemicgpt
+          MAX_AGE_DAYS: "30"
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python3 scripts/sweep-previews.py --dry-run
+          else
+            python3 scripts/sweep-previews.py
+          fi

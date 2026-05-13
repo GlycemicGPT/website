@@ -1,0 +1,106 @@
+name: Cleanup PR Preview
+
+# Fires when a PR is closed (merged OR rejected). Deletes the Cloudflare Pages
+# preview deployments that were created for that PR's branch (pr-<N>).
+#
+# Forks don't have access to repo secrets so previews are never created for
+# them in the first place; the if-condition below skips cleanup runs from
+# forks. Same-repo PRs get the cleanup.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cleanup-preview-pr-${{ github.event.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Delete preview deployments for pr-${{ github.event.number }}
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete preview deployments
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: glycemicgpt
+          BRANCH: pr-${{ github.event.number }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json, os, sys, urllib.request, urllib.error
+
+          CF_TOKEN = os.environ["CLOUDFLARE_API_TOKEN"]
+          CF_ACCOUNT = os.environ["CLOUDFLARE_ACCOUNT_ID"]
+          PROJECT = os.environ["PROJECT"]
+          BRANCH = os.environ["BRANCH"]
+
+          def cf(method, path):
+              req = urllib.request.Request(
+                  f"https://api.cloudflare.com/client/v4{path}",
+                  method=method,
+                  headers={
+                      "Authorization": f"Bearer {CF_TOKEN}",
+                      "Content-Type": "application/json",
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      return json.loads(r.read())
+              except urllib.error.HTTPError as e:
+                  body = e.read().decode("utf-8", errors="replace")
+                  return {"success": False, "status": e.code, "body": body}
+
+          # Paginate through all deployments and collect those for this branch.
+          deployments = []
+          page = 1
+          while True:
+              data = cf(
+                  "GET",
+                  f"/accounts/{CF_ACCOUNT}/pages/projects/{PROJECT}/deployments?per_page=100&page={page}",
+              )
+              if not data.get("success", True) and "result" not in data:
+                  print(f"::error::Failed to list deployments: {data}")
+                  sys.exit(1)
+              for d in data.get("result", []):
+                  meta = (d.get("deployment_trigger", {}) or {}).get("metadata", {}) or {}
+                  if meta.get("branch") == BRANCH:
+                      deployments.append(d)
+              info = data.get("result_info", {}) or {}
+              total_pages = info.get("total_pages", 1)
+              if page >= total_pages:
+                  break
+              page += 1
+
+          if not deployments:
+              print(f"No preview deployments found for branch {BRANCH}.")
+              sys.exit(0)
+
+          print(f"Found {len(deployments)} preview deployment(s) for {BRANCH}.")
+          failed = 0
+          for d in deployments:
+              did = d["id"]
+              print(f"  delete {did} ...")
+              result = cf(
+                  "DELETE",
+                  f"/accounts/{CF_ACCOUNT}/pages/projects/{PROJECT}/deployments/{did}?force=true",
+              )
+              if result.get("success"):
+                  print("    success")
+              else:
+                  failed += 1
+                  print(f"    FAILED: {result}")
+
+          # A failure here usually means the deployment was already deleted or
+          # is currently the production deployment (not possible for pr-* branches
+          # but defensive). We exit non-zero so the workflow shows red and a
+          # human notices, but the sweep workflow will catch any leftovers.
+          if failed:
+              print(f"::error::{failed} deletion(s) failed; sweep-previews workflow will retry on next run.")
+              sys.exit(1)
+          PY
