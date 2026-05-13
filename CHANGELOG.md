@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-05-13
+
+### 📦 Dependencies
+
+- fix(deps): update dependency next to v16.2.6 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#63](https://github.com/GlycemicGPT/website/pull/63))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#67](https://github.com/GlycemicGPT/website/pull/67))
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#60](https://github.com/GlycemicGPT/website/pull/60))
+
+<!-- changelog-cutoff:2026-05-13T07:37:51Z -->
+
+
 ## 2026-05-11
 
 ### 📦 Dependencies
