@@ -38,13 +38,13 @@ const chatMessages: ChatMsg[] = [
   {
     role: "assistant",
     content:
-      "14-day report:\n- Time in range: 74%\n- Avg: 151 mg/dL, GMI: 6.9%\n- Pattern: Post-dinner highs 3x/week\n- Suggestion: Evening carb ratio adjustment",
+      "14-day report:\n- Time in range: 74%\n- Avg: 151 mg/dL, GMI: 6.9%\n- Pattern: Post-dinner highs 3x/week\n- Worth raising with your care team",
   },
   { role: "user", content: "Will I go low tonight?" },
   {
     role: "assistant",
     content:
-      "Current: 136 mg/dL, trending down. **Moderate risk** of going below 70 by 2 AM. Consider a 15g snack before bed. I'll alert you if glucose drops below 80.",
+      "Current: 136 mg/dL, trending down. **Heading toward your low threshold** by 2 AM. I'll keep watching and alert you if it falls below 80.",
   },
 ];
 

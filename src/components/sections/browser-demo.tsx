@@ -157,22 +157,21 @@ export function BrowserDemo({ trigger }: { trigger: number }) {
               <p className="text-[9px] text-muted-foreground leading-relaxed">
                 Post-dinner highs for the <strong className="text-foreground">3rd day in a row</strong>.
                 Average post-dinner peak: <strong className="text-foreground">218 mg/dL</strong>.
-                Consider adjusting your evening carb ratio.
               </p>
             </div>
           </RevealBlock>
 
-          {/* AI Recommendation */}
+          {/* AI Pattern Summary */}
           <RevealBlock visible={visibleSections >= 5} reduced={prefersReducedMotion}>
             <div className="mb-3 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Activity className="h-3.5 w-3.5 text-blue-400" />
-                <span className="text-[10px] font-semibold text-blue-400">AI Recommendation</span>
+                <span className="text-[10px] font-semibold text-blue-400">AI Pattern Summary</span>
               </div>
               <p className="text-[9px] text-muted-foreground leading-relaxed">
-                Your trend is improving. Basal rates look well-tuned overnight.
-                Focus on dinner carb ratio and you could hit{" "}
-                <strong className="text-foreground">80%+ in range</strong> this week.
+                Overnight glucose stayed stable. Post-dinner remains the
+                recurring pattern this week. A summary your care team will
+                want to see.
               </p>
             </div>
           </RevealBlock>

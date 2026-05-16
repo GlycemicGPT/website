@@ -169,7 +169,7 @@ function AlertScreen({ state }: { state: WatchState }) {
       </span>
       <span className="text-[8px] text-zinc-500">mg/dL</span>
       <span className="text-[9px] text-zinc-400 mt-2 text-center leading-snug">
-        Consider correction bolus
+        High threshold crossed
       </span>
       <div className="mt-2 flex items-center gap-1.5 rounded-full bg-zinc-800 px-3 py-1 border border-zinc-700">
         <X className="h-2.5 w-2.5 text-zinc-400" />
@@ -192,7 +192,7 @@ function ChatScreen() {
       </span>
       <div className="mt-1.5 rounded-lg bg-zinc-800 border border-zinc-700 px-2 py-1.5 max-w-[90%]">
         <span className="text-[8px] text-zinc-300 leading-snug block">
-          Trending high after lunch. Correction delivered. Back in range within 90 min.
+          Trending high after lunch. Pump&apos;s closed-loop handled the correction. Back in range within 90 min.
         </span>
       </div>
       <span className="text-[7px] text-zinc-600 mt-1.5">Tap mic to ask</span>
