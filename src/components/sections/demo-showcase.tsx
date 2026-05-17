@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { AlertTriangle } from "lucide-react";
 import { AnimatedSection } from "@/components/animated-section";
 import { PhoneDemo } from "./phone-demo";
 import { WatchDemo } from "./watch-demo";
@@ -29,7 +30,7 @@ export function DemoShowcaseSection() {
         {/* Phone demo: AI Chat + Caregiver Alerts */}
         <div className="flex flex-col items-center gap-3">
           <PhoneDemo onDailyBriefAlert={onDailyBriefAlert} />
-          <p className="text-sm font-semibold">Your Pocket Endo</p>
+          <p className="text-sm font-semibold">Insights &amp; Alerts</p>
           <p className="max-w-[260px] text-center text-xs text-muted-foreground">
             AI chat, predictive insights, and caregiver alerts -- all from your
             phone.
@@ -54,6 +55,16 @@ export function DemoShowcaseSection() {
             web dashboard.
           </p>
         </div>
+      </div>
+
+      <div className="mx-auto mt-10 flex max-w-2xl items-start justify-center gap-2 text-center text-xs text-muted-foreground">
+        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+        <p>
+          Demo content shown for illustration. Names and data are fictional.
+          GlycemicGPT is a monitoring and analysis tool -- not medical advice.
+          Always consult your healthcare provider before making changes to your
+          diabetes management.
+        </p>
       </div>
     </AnimatedSection>
   );
