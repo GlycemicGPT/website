@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { AnimatedSection } from "@/components/animated-section";
+import { Reveal } from "@/components/reveal";
 import {
   Bluetooth,
   Smartphone,
@@ -55,33 +55,23 @@ interface NodeCardProps {
   sublabel: string;
   icon: React.ComponentType<{ className?: string }>;
   index: number;
-  prefersReducedMotion: boolean | null;
 }
 
-function NodeCard({ label, sublabel, icon: Icon, index, prefersReducedMotion }: NodeCardProps) {
+function NodeCard({ label, sublabel, icon: Icon, index }: NodeCardProps) {
   return (
-    <motion.div
+    <Reveal
+      delay={index * 100}
       className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-4 py-5 text-center min-w-[140px] sm:min-w-[160px]"
-      initial={prefersReducedMotion ? {} : { opacity: 0, y: 15 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1, duration: 0.4 }}
     >
       <Icon className="h-5 w-5 text-primary" />
       <div className="text-sm font-semibold">{label}</div>
       <div className="text-xs text-muted-foreground">{sublabel}</div>
-    </motion.div>
+    </Reveal>
   );
 }
 
 /** AI Engine module -- shared between desktop and mobile with compact prop for sizing */
-function AIEngineModule({
-  prefersReducedMotion,
-  compact = false,
-}: {
-  prefersReducedMotion: boolean | null;
-  compact?: boolean;
-}) {
+function AIEngineModule({ compact = false }: { compact?: boolean }) {
   const cardMin = compact ? "min-w-[100px]" : "min-w-[120px]";
   const cardPx = compact ? "px-3 py-3" : "px-4 py-3";
   const connectorW = compact ? "w-12" : "w-20";
@@ -89,12 +79,9 @@ function AIEngineModule({
   const outerPx = compact ? "px-5 py-4" : "px-6 py-5";
 
   return (
-    <motion.div
+    <Reveal
+      delay={400}
       className={`rounded-2xl border border-primary/20 bg-card/50 ${outerPx}`}
-      initial={prefersReducedMotion ? {} : { opacity: 0, y: 15 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.4, duration: 0.5 }}
     >
       <div className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-primary">
         AI Engine
@@ -125,13 +112,11 @@ function AIEngineModule({
           <div className="text-[10px] text-muted-foreground">RAG + Vector Search</div>
         </div>
       </div>
-    </motion.div>
+    </Reveal>
   );
 }
 
 export function ArchitectureSection() {
-  const prefersReducedMotion = useReducedMotion();
-
   return (
     <AnimatedSection className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div className="mb-12 text-center" id="platform">
@@ -148,7 +133,7 @@ export function ArchitectureSection() {
       <div className="hidden md:flex flex-col items-center gap-0">
         {/* AI Engine module - centered above Platform Core (3rd node) */}
         <div className="flex flex-col items-center" style={{ transform: "translateX(104px)" }}>
-          <AIEngineModule prefersReducedMotion={prefersReducedMotion} />
+          <AIEngineModule />
           <ConnectorArrow vertical />
         </div>
 
@@ -161,7 +146,6 @@ export function ArchitectureSection() {
                 sublabel={node.sublabel}
                 icon={node.icon}
                 index={i}
-                prefersReducedMotion={prefersReducedMotion}
               />
               {i < mainFlow.length - 1 && <ConnectorArrow />}
             </div>
@@ -178,7 +162,6 @@ export function ArchitectureSection() {
               sublabel={node.sublabel}
               icon={node.icon}
               index={i}
-              prefersReducedMotion={prefersReducedMotion}
             />
             {/* Show connector arrow -- skip between backend and web since AI Engine goes between them */}
             {i < mainFlow.length - 1 && node.id !== "backend" && <ConnectorArrow vertical />}
@@ -186,7 +169,7 @@ export function ArchitectureSection() {
             {node.id === "backend" && (
               <div className="my-0">
                 <ConnectorArrow vertical />
-                <AIEngineModule compact prefersReducedMotion={prefersReducedMotion} />
+                <AIEngineModule compact />
                 <ConnectorArrow vertical />
               </div>
             )}

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
 import { Server, Smartphone, Activity, ArrowRight } from "lucide-react";
 import { AnimatedSection } from "@/components/animated-section";
+import { Reveal } from "@/components/reveal";
 
 const steps = [
   {
@@ -28,8 +28,6 @@ const steps = [
 ];
 
 export function GettingStartedSection() {
-  const prefersReducedMotion = useReducedMotion();
-
   return (
     <AnimatedSection className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div className="mb-12 text-center" id="getting-started">
@@ -46,13 +44,10 @@ export function GettingStartedSection() {
         <div className="absolute left-0 right-0 top-16 hidden h-px bg-border md:block" />
 
         {steps.map((step, i) => (
-          <motion.div
+          <Reveal
             key={step.title}
+            delay={i * 150}
             className="relative rounded-xl border border-border bg-card p-6 text-center"
-            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.15, duration: 0.4 }}
           >
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <step.icon className="h-6 w-6 text-primary" />
@@ -69,7 +64,7 @@ export function GettingStartedSection() {
                 {step.code}
               </code>
             )}
-          </motion.div>
+          </Reveal>
         ))}
       </div>
 

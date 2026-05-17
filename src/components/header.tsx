@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import { DiscordIcon, GitHubIcon, OpenCollectiveIcon } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
+
+const MOBILE_MENU_EXIT_MS = 180;
 
 const navLinks = [
   { label: "Features", href: "/#features" },
@@ -19,12 +20,39 @@ const navLinks = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileClosing, setMobileClosing] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+  }, []);
+
+  const toggleMobile = () => {
+    if (mobileOpen && !mobileClosing) {
+      setMobileClosing(true);
+      closeTimerRef.current = setTimeout(() => {
+        setMobileOpen(false);
+        setMobileClosing(false);
+      }, MOBILE_MENU_EXIT_MS);
+    } else if (!mobileOpen) {
+      setMobileOpen(true);
+    }
+  };
+
+  const closeMobile = () => {
+    if (!mobileOpen || mobileClosing) return;
+    setMobileClosing(true);
+    closeTimerRef.current = setTimeout(() => {
+      setMobileOpen(false);
+      setMobileClosing(false);
+    }, MOBILE_MENU_EXIT_MS);
+  };
 
   return (
     <header
@@ -65,42 +93,40 @@ export function Header() {
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
           <button
-            onClick={() => setMobileOpen(!mobileOpen)}
+            onClick={toggleMobile}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent"
             aria-label="Toggle menu"
+            aria-expanded={mobileOpen && !mobileClosing}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.nav
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden border-b border-border bg-background/95 backdrop-blur-md md:hidden"
-          >
-            <div className="flex flex-col gap-1 px-4 py-3">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  {...(link.external
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                  className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          </motion.nav>
-        )}
-      </AnimatePresence>
+      {/* Mobile menu -- mounted during open + closing phases to play exit animation */}
+      {mobileOpen && (
+        <nav
+          className={`${
+            mobileClosing ? "animate-fade-up-exit" : "animate-fade-down"
+          } overflow-hidden border-b border-border bg-background/95 backdrop-blur-md md:hidden`}
+        >
+          <div className="flex flex-col gap-1 px-4 py-3">
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={closeMobile}
+                {...(link.external
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

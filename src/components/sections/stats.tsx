@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { AnimatedSection } from "@/components/animated-section";
+import { Reveal } from "@/components/reveal";
 import { Shield, Brain, Puzzle, Users } from "lucide-react";
 
 const differentiators = [
@@ -32,19 +32,14 @@ const differentiators = [
 ];
 
 export function StatsSection() {
-  const prefersReducedMotion = useReducedMotion();
-
   return (
     <AnimatedSection className="border-y border-border bg-muted/30">
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 px-4 py-16 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
         {differentiators.map((item, i) => (
-          <motion.div
+          <Reveal
             key={item.title}
+            delay={i * 100}
             className="flex flex-col items-center text-center"
-            initial={prefersReducedMotion ? {} : { opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1, duration: 0.4 }}
           >
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
               <item.icon className="h-5 w-5 text-primary" />
@@ -53,7 +48,7 @@ export function StatsSection() {
             <p className="text-xs text-muted-foreground leading-relaxed">
               {item.description}
             </p>
-          </motion.div>
+          </Reveal>
         ))}
       </div>
     </AnimatedSection>
