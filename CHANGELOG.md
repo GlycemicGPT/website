@@ -8,6 +8,21 @@
 
 - fix(demos): align landing-page demos with monitoring-only stance [@jlengelbrecht](https://github.com/jlengelbrecht) ([#94](https://github.com/GlycemicGPT/website/pull/94))
 
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#95](https://github.com/GlycemicGPT/website/pull/95))
+
+<!-- changelog-cutoff:2026-05-17T23:28:04Z -->
+
+
+## 2026-05-17
+
+### 🌐 Website
+
+#### 🐛 Bug Fixes
+
+- fix(demos): align landing-page demos with monitoring-only stance [@jlengelbrecht](https://github.com/jlengelbrecht) ([#94](https://github.com/GlycemicGPT/website/pull/94))
+
 ### 📦 Dependencies
 
 - chore(deps): lock file maintenance [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#92](https://github.com/GlycemicGPT/website/pull/92))
