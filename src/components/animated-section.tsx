@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useReveal } from "@/lib/use-reveal";
 
 interface AnimatedSectionProps {
   children: ReactNode;
@@ -14,22 +14,19 @@ export function AnimatedSection({
   className,
   delay = 0,
 }: AnimatedSectionProps) {
-  const prefersReducedMotion = useReducedMotion();
-
-  if (prefersReducedMotion) {
-    return <section className={className}>{children}</section>;
-  }
-
+  const { ref, state } = useReveal<HTMLElement>();
+  const style: CSSProperties | undefined = delay
+    ? ({ "--reveal-delay": `${delay}ms` } as CSSProperties)
+    : undefined;
+  const classes = className ? `reveal ${className}` : "reveal";
   return (
-    <motion.section
-      className={className}
-      style={{ willChange: "opacity, transform" }}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+    <section
+      ref={ref}
+      className={classes}
+      data-reveal-state={state === "idle" ? undefined : state}
+      style={style}
     >
       {children}
-    </motion.section>
+    </section>
   );
 }

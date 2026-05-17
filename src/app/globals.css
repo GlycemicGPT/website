@@ -196,3 +196,68 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* --- Reveal-on-scroll (replaces framer-motion whileInView in marketing sections).
+   Default is visible -- only elements that JS has flagged as below-the-fold
+   ("pending") are hidden, then transition to visible when the observer fires.
+   Inverting the default avoids above-the-fold flicker and keeps content visible
+   for non-JS / failed-hydration scenarios. --- */
+.reveal {
+  transition:
+    opacity 0.4s ease-out,
+    transform 0.4s ease-out;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal[data-reveal-state="pending"] {
+  opacity: 0;
+  transform: translateY(20px);
+  will-change: opacity, transform;
+}
+.reveal[data-reveal-state="visible"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- Mobile menu open/close (replaces framer-motion AnimatePresence in header) --- */
+@keyframes fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fade-up-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+.animate-fade-down {
+  animation: fade-down 0.2s ease-out both;
+}
+.animate-fade-up-exit {
+  animation: fade-up-exit 0.18s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal[data-reveal-state="pending"],
+  .reveal[data-reveal-state="visible"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    will-change: auto;
+  }
+  .animate-fade-down,
+  .animate-fade-up-exit {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

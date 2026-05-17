@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { AnimatedSection } from "@/components/animated-section";
+import { Reveal } from "@/components/reveal";
 import { Bluetooth, Cloud, Link } from "lucide-react";
 
 const tiers = [
@@ -47,8 +47,6 @@ const tiers = [
 ];
 
 export function ConnectSection() {
-  const prefersReducedMotion = useReducedMotion();
-
   return (
     <AnimatedSection className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div className="mb-12 text-center">
@@ -64,17 +62,14 @@ export function ConnectSection() {
 
       <div className="grid gap-6 md:grid-cols-3">
         {tiers.map((tier, i) => (
-          <motion.div
+          <Reveal
             key={tier.title}
+            delay={i * 100}
             className={`relative flex flex-col rounded-xl border p-6 ${
               tier.available
                 ? "border-primary/30 bg-card shadow-lg shadow-primary/5"
                 : "border-border bg-card"
             }`}
-            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1, duration: 0.4 }}
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -107,7 +102,7 @@ export function ConnectSection() {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </Reveal>
         ))}
       </div>
 
