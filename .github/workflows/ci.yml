@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -49,7 +49,7 @@ jobs:
         # The main check (lint/typecheck/build above) still runs for them.
         if: github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -67,7 +67,7 @@ jobs:
       - name: Post preview URL to PR
         if: steps.preview-deploy.outcome == 'success'
         continue-on-error: true
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PREVIEW_URL: ${{ steps.preview-deploy.outputs.deployment-url }}
           ALIAS_URL: https://pr-${{ github.event.number }}.glycemicgpt.pages.dev
@@ -117,7 +117,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -147,7 +147,7 @@ jobs:
       - name: Post Lighthouse scores to PR
         if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         continue-on-error: true
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.ci-token.outputs.token || secrets.GITHUB_TOKEN }}
           script: |
@@ -269,7 +269,7 @@ jobs:
         run: npm install minimatch
 
       - name: Label PR based on file changes and conventions
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.ci-token.outputs.token }}
           script: |
@@ -444,7 +444,7 @@ jobs:
 
       - name: Post attribution findings to PR
         if: always() && github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.ci-token.outputs.token || secrets.GITHUB_TOKEN }}
           script: |
@@ -490,7 +490,7 @@ jobs:
 
       - name: Auto-close PR on CRITICAL violation
         if: always() && steps.detect.outputs.severity == 'CRITICAL'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.ci-token.outputs.token || secrets.GITHUB_TOKEN }}
           script: |
