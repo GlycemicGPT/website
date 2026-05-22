@@ -4,6 +4,15 @@
 
 ### 📦 Dependencies
 
+- chore(deps): update dependency fumadocs-ui to v16.8.12 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#107](https://github.com/GlycemicGPT/website/pull/107))
+
+<!-- changelog-cutoff:2026-05-22T14:44:57Z -->
+
+
+## 2026-05-22
+
+### 📦 Dependencies
+
 - chore(deps): update dependency fumadocs-mdx to v15.0.7 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#106](https://github.com/GlycemicGPT/website/pull/106))
 - chore(deps): update dependency framer-motion to v12.39.0 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#103](https://github.com/GlycemicGPT/website/pull/103))
 
