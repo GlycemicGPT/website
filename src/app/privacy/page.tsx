@@ -44,7 +44,7 @@ export default function PrivacyPage() {
       <p>
         GlycemicGPT is self-hosted software. Your data &mdash; glucose readings,
         insulin and pump data, AI chat, settings, and credentials &mdash; lives
-        entirely in the database on infrastructure <strong>you</strong> control.
+        entirely in the database on infrastructure <strong>you</strong>{" "}control.
         The platform does not phone home, collect telemetry, or transmit your
         data to the project or any third party.
       </p>
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
         >
           Sentry (donated through Sentry for Good)
         </a>{" "}
-        for error monitoring in <strong>its own</strong> development, CI, and
+        for error monitoring in <strong>its own</strong>{" "}development, CI, and
         staging environments &mdash; to catch crashes before they reach a
         release.
       </p>
@@ -106,9 +106,9 @@ export default function PrivacyPage() {
       <p>
         Distributed builds carry no Sentry connection string, so a build you
         pull and run reports nothing to anyone &mdash; there is no project
-        telemetry to disable. If you <em>want</em> error monitoring for your own
+        telemetry to disable. If you <em>want</em>{" "}error monitoring for your own
         self-hosted deployment, you can set your own connection string; reports
-        then go to <em>your</em> account, never the project&rsquo;s.
+        then go to <em>your</em>{" "}account, never the project&rsquo;s.
       </p>
 
       <h2>Your rights</h2>

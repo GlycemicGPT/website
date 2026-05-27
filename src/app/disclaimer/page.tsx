@@ -24,7 +24,7 @@ export default function DisclaimerPage() {
     >
       <h2>Regulatory status</h2>
       <p>
-        This software has <strong>not</strong> been cleared, approved, or
+        This software has <strong>not</strong>{" "}been cleared, approved, or
         certified by any regulatory authority worldwide, including but not
         limited to:
       </p>
@@ -38,7 +38,7 @@ export default function DisclaimerPage() {
 
       <h2>Not a medical device</h2>
       <p>
-        <strong>This software is NOT a medical device.</strong> It is
+        <strong>This software is NOT a medical device.</strong>{" "}It is
         experimental open-source software provided for educational and
         informational purposes only. No individual, organization, or entity
         associated with this project is the &ldquo;manufacturer&rdquo; of a
@@ -59,13 +59,13 @@ export default function DisclaimerPage() {
       </p>
       <ul>
         <li>
-          <strong>Cloud-hosted AI providers</strong> receive your glucose,
+          <strong>Cloud-hosted AI providers</strong>{" "}receive your glucose,
           insulin, pump, and therapy data context for inference. That data is
           then subject to the provider&rsquo;s data-handling policy and the
           policies of any upstream providers it routes to.
         </li>
         <li>
-          <strong>Local AI providers</strong> (models running on infrastructure
+          <strong>Local AI providers</strong>{" "}(models running on infrastructure
           you control, such as Ollama, vLLM, or llama.cpp) keep that data on
           your own network.
         </li>
@@ -84,19 +84,19 @@ export default function DisclaimerPage() {
       </p>
       <ul>
         <li>
-          <strong>Hallucinate</strong> &mdash; generate plausible-sounding but
+          <strong>Hallucinate</strong>{" "}&mdash; generate plausible-sounding but
           incorrect information;
         </li>
         <li>
-          <strong>Misinterpret data</strong> &mdash; draw incorrect conclusions
+          <strong>Misinterpret data</strong>{" "}&mdash; draw incorrect conclusions
           from glucose readings;
         </li>
         <li>
-          <strong>Provide outdated information</strong> &mdash; not reflect the
+          <strong>Provide outdated information</strong>{" "}&mdash; not reflect the
           latest medical guidelines;
         </li>
         <li>
-          <strong>Lack context</strong> &mdash; not understand your complete
+          <strong>Lack context</strong>{" "}&mdash; not understand your complete
           medical history, comorbidities, or current medications.
         </li>
       </ul>
@@ -108,17 +108,17 @@ export default function DisclaimerPage() {
       <h2>Critical warnings</h2>
       <ol>
         <li>
-          <strong>Do not replace professional medical care.</strong> Always
+          <strong>Do not replace professional medical care.</strong>{" "}Always
           consult your endocrinologist, diabetes educator, or healthcare
           provider before making any changes to your diabetes management.
         </li>
         <li>
-          <strong>Verify all suggestions.</strong> Any insulin dosing, carb
+          <strong>Verify all suggestions.</strong>{" "}Any insulin dosing, carb
           ratio, or correction factor suggestion must be verified with your
           healthcare team before use.
         </li>
         <li>
-          <strong>Use extreme caution.</strong> Incorrect diabetes management
+          <strong>Use extreme caution.</strong>{" "}Incorrect diabetes management
           can result in severe hypoglycemia, diabetic ketoacidosis (DKA), or
           other life-threatening conditions.
         </li>
@@ -141,7 +141,7 @@ export default function DisclaimerPage() {
       </p>
       <p>
         Anyone who builds, installs, or runs such a fork becomes the{" "}
-        <strong>manufacturer of their personal medical device</strong> and
+        <strong>manufacturer of their personal medical device</strong>{" "}and
         accepts full responsibility for that decision &mdash; the same posture
         used by DIY diabetes projects such as Loop and AndroidAPS.
       </p>

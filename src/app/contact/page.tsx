@@ -22,6 +22,19 @@ export default function ContactPage() {
       lastUpdated="May 27, 2026"
       intro="GlycemicGPT is a community-run open-source project. Here is how to reach us, depending on what you need."
     >
+      <h2>Email</h2>
+      <p>
+        For general inquiries, partnership questions, press, or anything that
+        does not fit the channels below, email us at{" "}
+        <a href="mailto:info@glycemicgpt.org">info@glycemicgpt.org</a>. For
+        questions about sponsorship, donations, or funding the project, use{" "}
+        <a href="mailto:funding@glycemicgpt.org">funding@glycemicgpt.org</a>.
+      </p>
+      <p>
+        Please do not email reports of security vulnerabilities; use the private
+        disclosure process described below instead.
+      </p>
+
       <h2>Community and general questions</h2>
       <p>
         The fastest way to ask a question, get help, or talk to the community is
@@ -67,7 +80,7 @@ export default function ContactPage() {
 
       <h2>Security and privacy disclosure</h2>
       <p>
-        Please do <strong>not</strong> open a public issue for a security
+        Please do <strong>not</strong>{" "}open a public issue for a security
         vulnerability or a sensitive privacy concern. Instead, report it
         privately so we can address it before it is disclosed:
       </p>
@@ -98,8 +111,9 @@ export default function ContactPage() {
           rel="noopener noreferrer"
         >
           Open Collective
-        </a>
-        .
+        </a>{" "}
+        or email{" "}
+        <a href="mailto:funding@glycemicgpt.org">funding@glycemicgpt.org</a>.
       </p>
     </LegalPage>
   );
