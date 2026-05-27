@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-05-27
+
+### 🌐 Website
+
+#### ✨ New Features
+
+- feat: add legal and standard website pages (Privacy, Terms, Disclaimer, Accessibility, Contact) [@jlengelbrecht](https://github.com/jlengelbrecht) ([#120](https://github.com/GlycemicGPT/website/pull/120))
+
+### 📦 Dependencies
+
+- chore(deps): update dependency fumadocs-ui to v16.9.1 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#118](https://github.com/GlycemicGPT/website/pull/118))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#119](https://github.com/GlycemicGPT/website/pull/119))
+
+<!-- changelog-cutoff:2026-05-27T14:42:50Z -->
+
+
 ## 2026-05-26
 
 ### 📦 Dependencies
