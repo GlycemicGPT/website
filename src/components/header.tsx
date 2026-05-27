@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { DiscordIcon, GitHubIcon, OpenCollectiveIcon } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
@@ -63,11 +64,11 @@ export function Header() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <a href="#" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+        <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
           {/* eslint-disable-next-line @next/next/no-img-element -- SVG favicon, 6.5KB, no optimization needed */}
           <img src="/logo.svg" alt="" className="h-7 w-7" aria-hidden="true" />
           GlycemicGPT
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 md:flex">

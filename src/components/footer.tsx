@@ -4,7 +4,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-background">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-3">
             <h3 className="text-lg font-bold">GlycemicGPT</h3>
@@ -75,6 +75,53 @@ export function Footer() {
 
           {/* Legal */}
           <div className="space-y-3">
+            <h4 className="text-sm font-semibold">Legal</h4>
+            <ul className="space-y-2">
+              <li>
+                <a
+                  href="/privacy"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/terms"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Terms of Use
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/disclaimer"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Medical Disclaimer
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/accessibility"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Accessibility
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/contact"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Contact
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Important */}
+          <div className="space-y-3">
             <h4 className="text-sm font-semibold">Important</h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
               GlycemicGPT is not a medical device. It is not FDA approved or CE
@@ -82,6 +129,12 @@ export function Footer() {
               For informational and educational purposes only. Always consult
               your healthcare provider for medical decisions.
             </p>
+            <a
+              href="/disclaimer"
+              className="text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+            >
+              Read the full medical disclaimer
+            </a>
           </div>
         </div>
 
