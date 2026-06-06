@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-06-06
+
+### 📦 Dependencies
+
+- fix(deps): update react monorepo to v19.2.7 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#143](https://github.com/GlycemicGPT/website/pull/143))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#144](https://github.com/GlycemicGPT/website/pull/144))
+
+<!-- changelog-cutoff:2026-06-06T07:12:39Z -->
+
+
 ## 2026-06-04
 
 ### 📦 Dependencies
