@@ -4,6 +4,20 @@
 
 ### 📦 Dependencies
 
+- chore(deps): update dependency typescript to v7 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#200](https://github.com/GlycemicGPT/website/pull/200))
+- chore(deps): lock file maintenance [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#198](https://github.com/GlycemicGPT/website/pull/198))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#199](https://github.com/GlycemicGPT/website/pull/199))
+
+<!-- changelog-cutoff:2026-07-11T19:06:18Z -->
+
+
+## 2026-07-11
+
+### 📦 Dependencies
+
 - chore(deps): update dependency @types/node to v24.13.3 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#196](https://github.com/GlycemicGPT/website/pull/196))
 
 ### ❓ Uncategorized
