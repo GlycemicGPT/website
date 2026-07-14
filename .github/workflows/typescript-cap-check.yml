@@ -41,9 +41,12 @@ jobs:
           set -euo pipefail
 
           cap=$(npx --yes json5@2.2.3 < .github/renovate.json5 \
-            | jq -er '.packageRules[]
-                      | select((.matchPackageNames // []) | index("typescript"))
-                      | .allowedVersions')
+            | jq -er '[.packageRules[]
+                       | select((.matchPackageNames // []) | index("typescript"))
+                       | .allowedVersions // empty]
+                      | if length == 1 then first
+                        else error("expected exactly one typescript allowedVersions rule, found \(length)")
+                        end')
           peer=$(jq -er '.packages["node_modules/@typescript-eslint/typescript-estree"]
                          | .peerDependencies.typescript' package-lock.json)
           echo "Renovate cap: $cap"
