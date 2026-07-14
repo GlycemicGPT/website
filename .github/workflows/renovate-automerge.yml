@@ -47,8 +47,13 @@ jobs:
         with:
           app-id: ${{ secrets.MERGE_APP_ID }}
           private-key: ${{ secrets.MERGE_APP_PRIVATE_KEY }}
+          # write: approve + squash-merge the PR. read: the guard reads check
+          # runs and commit statuses (required on a private repo, and correct
+          # least-privilege here).
           permission-contents: write
           permission-pull-requests: write
+          permission-checks: read
+          permission-statuses: read
 
       - name: Approve and merge Renovate PR at the verified SHA
         env:
@@ -98,7 +103,7 @@ jobs:
           # never tested against it. Leave it for Renovate's rebase (which
           # fires a fresh CI run and a fresh attempt here).
           BEHIND_BY=$(gh api "repos/$REPO/compare/main...$HEAD_SHA" --jq '.behind_by')
-          if [ "$BEHIND_BY" -ne 0 ]; then
+          if [ "${BEHIND_BY:-1}" -ne 0 ]; then
             echo "PR #$PR_NUMBER is $BEHIND_BY commit(s) behind main; awaiting rebase"
             exit 0
           fi
@@ -109,23 +114,23 @@ jobs:
           fi
 
           # Provenance gate. A bypass merge must never carry attacker content
-          # past code-owner review. The author login is derived from the
-          # forgeable commit-author email, and GitHub's signature verification
-          # attests only to the COMMITTER identity — the two are decoupled, so
-          # checking author + verified alone lets a write-access user push a
-          # commit whose author is spoofed to Renovate but which is signed by
-          # their own key.
+          # past code-owner review. The PRIMARY branch-integrity control is the
+          # "Restrict renovate branch pushes" ruleset, which permits only the
+          # Renovate app to create/update/delete renovate/* branches, so a
+          # write-access human cannot place a commit on a bot PR at all. This
+          # per-commit check is defense-in-depth behind that ruleset.
           #
-          # Genuine Renovate commits are created through the GitHub API, so
-          # GitHub itself commits and signs them: committer is web-flow
-          # (noreply@github.com) and the signature is GitHub's web-flow key
-          # (verified/valid). We therefore require, for every commit: authored
-          # by Renovate AND committed by GitHub web-flow AND a valid GitHub
-          # signature. An attacker cannot obtain a GitHub-signed commit whose
-          # author is spoofed to Renovate: signing with their own key makes the
-          # committer/signer themselves (fails the web-flow check), and forging
-          # the committer email to noreply@github.com yields an unsigned commit
-          # (fails verified). Both paths are rejected.
+          # The author login is derived from the forgeable commit-author email,
+          # and GitHub's signature verification attests to the COMMITTER, not
+          # the author — decoupled identities. So we bind BOTH: every commit
+          # must be authored by Renovate AND committed by GitHub web-flow
+          # (noreply@github.com) AND carry a valid GitHub signature (reason
+          # "valid"). Genuine Renovate commits are created through the GitHub
+          # API, which GitHub commits and web-flow-signs. A human spoofing the
+          # author cannot reproduce this: the Contents API leaves the committer
+          # as the human and the commit unsigned, and the Git Data API can fake
+          # the committer email but not a valid GitHub signature — both fail
+          # here (verified empirically against this repo).
           BAD_COMMITS=$(gh api "repos/$REPO/pulls/$PR_NUMBER/commits?per_page=100" \
             --jq '[.[] | select(
                      ((.author.login // "") != "glycemicgpt-renovate[bot]")
@@ -142,31 +147,38 @@ jobs:
           # Re-enforce main's ENTIRE required-check set at HEAD_SHA, read from
           # the live branch rules rather than a hardcoded name — so adding a
           # second required check can't silently leave this sole enforcer
-          # gating on only the first. A required context may be satisfied by a
-          # check run OR a legacy commit status; require every one to be green.
+          # gating on only the first. Each required context carries an optional
+          # integration_id binding it to a specific app; when set, a matching
+          # check run must come from that app, so a same-named check from a
+          # different app cannot satisfy the gate.
           REQUIRED=$(gh api "repos/$REPO/rules/branches/main" \
             --jq '[.[] | select(.type == "required_status_checks")
-                       | .parameters.required_status_checks[].context] | unique')
-          REQUIRED_COUNT=$(echo "$REQUIRED" | jq 'length')
-          if [ "$REQUIRED_COUNT" -eq 0 ]; then
+                       | .parameters.required_status_checks[]
+                       | {context, integration_id}] | unique')
+          if [ "$(echo "$REQUIRED" | jq 'length')" -eq 0 ]; then
             echo "::error::Could not read any required status checks for main; refusing to merge"
             exit 1
           fi
 
-          # Contexts that are green at this SHA: check runs (conclusion ==
-          # success) unioned with legacy commit statuses (state == success).
-          PASSING=$(
-            {
-              gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100" \
-                --jq '.check_runs[] | select(.conclusion == "success") | .name'
-              gh api "repos/$REPO/commits/$HEAD_SHA/status" \
-                --jq '.statuses[] | select(.state == "success") | .context'
-            } | sort -u
-          )
+          # Green at this SHA: success check runs, with the producing app id.
+          # Legacy commit statuses are intentionally NOT consulted: any actor
+          # with repo write can POST a status with an arbitrary context+state,
+          # so a status is forgeable and must not satisfy a required check.
+          # The repo uses check runs, not statuses, for its required checks; if
+          # a status-type required check is ever added this gate fails closed
+          # (it will report missing) until this is revisited with a producer
+          # binding.
+          CHECK_RUNS=$(gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100" \
+            --jq '[.check_runs[] | select(.conclusion == "success") | {name, app_id: .app.id}]')
 
-          MISSING=$(echo "$REQUIRED" | jq -r --argjson passing \
-            "$(printf '%s' "$PASSING" | jq -R . | jq -s .)" \
-            'map(select(. as $c | ($passing | index($c)) | not)) | .[]')
+          # A required context is satisfied only by a same-named success check
+          # run from the required app (or any app when integration_id is unset).
+          MISSING=$(jq -rn \
+            --argjson req "$REQUIRED" --argjson runs "$CHECK_RUNS" '
+            $req | map(select(. as $r
+              | ([$runs[] | select(.name == $r.context
+                    and ($r.integration_id == null or .app_id == $r.integration_id))] | length) == 0
+            )) | .[].context')
           if [ -n "$MISSING" ]; then
             echo "::error::Required checks not green on $HEAD_SHA: $(echo "$MISSING" | paste -sd, -); refusing to merge"
             exit 1
@@ -177,7 +189,7 @@ jobs:
           # must itself be entirely green at HEAD_SHA, with no non-success
           # check run lingering in it.
           SUITE_CLEAN=$(gh api "repos/$REPO/check-suites/$CHECK_SUITE_ID/check-runs?per_page=100" \
-            --jq --arg sha "$HEAD_SHA" \
+            | jq -r --arg sha "$HEAD_SHA" \
             '[.check_runs[]] | (length >= 1)
                and all(.head_sha == $sha and .conclusion == "success")')
           if [ "$SUITE_CLEAN" != "true" ]; then
