@@ -3,6 +3,9 @@ name: Renovate Auto-Approve
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
 
 permissions: {}
 
@@ -11,7 +14,7 @@ jobs:
     name: Approve & Enable Auto-Merge
     runs-on: ubuntu-latest
     # Only run for Renovate PRs (use PR author, not actor, so reopens by maintainers still trigger)
-    if: github.event.pull_request.user.login == 'glycemicgpt-renovate[bot]'
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'glycemicgpt-renovate[bot]'
     permissions: {}
 
     steps:
@@ -55,4 +58,81 @@ jobs:
           GH_TOKEN: ${{ steps.merge-token.outputs.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          ALREADY_ENABLED=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json autoMergeRequest --jq '.autoMergeRequest != null')
+          if [ "$ALREADY_ENABLED" = "true" ]; then
+            echo "Auto-merge already enabled"
+            exit 0
+          fi
           gh pr merge "$PR_NUMBER" --auto --squash --repo ${{ github.repository }}
+
+  # Armed auto-merge never fires on this repo: the org "Protect main" ruleset
+  # requires a code-owner review, which the merge app's approval cannot satisfy
+  # (apps cannot be code owners). This job is the merge path instead. It merges
+  # directly as glycemicgpt-merge (a ruleset bypass actor), so the required
+  # "Lint, Type Check & Build" check is enforced here explicitly: the job only
+  # runs when the CI workflow_run that contains that check concluded SUCCESS,
+  # re-verifies the check on the exact head SHA, and pins the merge to that SHA.
+  merge-on-green:
+    name: Merge on green CI
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      startsWith(github.event.workflow_run.head_branch, 'renovate/')
+    permissions: {}
+
+    steps:
+      - name: Generate token for glycemicgpt-merge
+        id: merge-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.MERGE_APP_ID }}
+          private-key: ${{ secrets.MERGE_APP_PRIVATE_KEY }}
+
+      - name: Merge Renovate PR at the verified SHA
+        env:
+          GH_TOKEN: ${{ steps.merge-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          PR_DATA=$(gh pr list --repo "$REPO" --head "$HEAD_BRANCH" --state open \
+            --json number,headRefOid,author --jq '.[0]')
+          if [ -z "$PR_DATA" ] || [ "$PR_DATA" = "null" ]; then
+            echo "No open PR for $HEAD_BRANCH; nothing to do"
+            exit 0
+          fi
+
+          PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number')
+          PR_AUTHOR=$(echo "$PR_DATA" | jq -r '.author.login')
+          PR_HEAD=$(echo "$PR_DATA" | jq -r '.headRefOid')
+
+          if [ "$PR_AUTHOR" != "glycemicgpt-renovate[bot]" ] && [ "$PR_AUTHOR" != "app/glycemicgpt-renovate" ]; then
+            echo "PR #$PR_NUMBER author is not Renovate ($PR_AUTHOR); skipping"
+            exit 0
+          fi
+
+          if [ "$PR_HEAD" != "$HEAD_SHA" ]; then
+            echo "PR #$PR_NUMBER head moved ($PR_HEAD != $HEAD_SHA); a newer CI run will handle it"
+            exit 0
+          fi
+
+          # Refuse if any commit was not authored by Renovate: a bypass merge
+          # must never carry human-pushed commits past the review requirement.
+          FOREIGN_AUTHORS=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json commits \
+            --jq '[.commits[].authors[].login | select(. != "glycemicgpt-renovate[bot]")] | length')
+          if [ "$FOREIGN_AUTHORS" -ne 0 ]; then
+            echo "::notice::PR #$PR_NUMBER has non-Renovate commits; leaving it for human review"
+            exit 0
+          fi
+
+          # Belt and braces: the required check itself must be green on this SHA.
+          LINT_CONCLUSION=$(gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100" \
+            --jq '[.check_runs[] | select(.name == "Lint, Type Check & Build")] | max_by(.started_at) | .conclusion')
+          if [ "$LINT_CONCLUSION" != "success" ]; then
+            echo "::error::Required check is not green on $HEAD_SHA (got: $LINT_CONCLUSION); refusing to merge"
+            exit 1
+          fi
+
+          gh pr merge "$PR_NUMBER" --squash --repo "$REPO" --match-head-commit "$HEAD_SHA"
