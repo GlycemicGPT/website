@@ -52,6 +52,10 @@ jobs:
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
           CHECK_SUITE_ID: ${{ github.event.workflow_run.check_suite_id }}
         run: |
+          # Every guard below must fail CLOSED: abort on any API error rather
+          # than falling through with an empty value.
+          set -euo pipefail
+
           # Resolve the PR by exact head SHA, not just branch name, so a
           # same-named fork branch can never be selected.
           PR_NUMBER=$(gh pr list --repo "$REPO" --head "$HEAD_BRANCH" --state open \
