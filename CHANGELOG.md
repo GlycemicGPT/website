@@ -6,6 +6,36 @@
 
 - docs: source org acknowledgments from the .github repo [@jlengelbrecht](https://github.com/jlengelbrecht) ([#202](https://github.com/GlycemicGPT/website/pull/202))
 
+### 🏗️ Infrastructure
+
+#### 🐛 Bug Fixes
+
+- fix(deps): keep typescript within typescript-eslint's peer-supported range [@jlengelbrecht](https://github.com/jlengelbrecht) ([#204](https://github.com/GlycemicGPT/website/pull/204))
+
+#### 📝 Other Changes
+
+- ci: merge via REST API so the bypass merge is not blocked client-side [@jlengelbrecht](https://github.com/jlengelbrecht) ([#206](https://github.com/GlycemicGPT/website/pull/206))
+- ci: pin create-github-app-token action to commit SHA [@jlengelbrecht](https://github.com/jlengelbrecht) ([#205](https://github.com/GlycemicGPT/website/pull/205))
+- chore(deps): update renovatebot/github-action action to v44.2.6 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#41](https://github.com/GlycemicGPT/website/pull/41))
+
+### 📦 Dependencies
+
+- chore(deps): update dependency tar to v7.5.20 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#208](https://github.com/GlycemicGPT/website/pull/208))
+- chore(deps): update dependency fumadocs-ui to v16.11.3 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#207](https://github.com/GlycemicGPT/website/pull/207))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#203](https://github.com/GlycemicGPT/website/pull/203))
+
+<!-- changelog-cutoff:2026-07-14T17:27:36Z -->
+
+
+## 2026-07-14
+
+### 📚 Documentation
+
+- docs: source org acknowledgments from the .github repo [@jlengelbrecht](https://github.com/jlengelbrecht) ([#202](https://github.com/GlycemicGPT/website/pull/202))
+
 ### 📦 Dependencies
 
 - chore(deps): update dependency typescript to v7 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#200](https://github.com/GlycemicGPT/website/pull/200))
