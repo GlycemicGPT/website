@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-07-14
+
+### 📚 Documentation
+
+- docs: source org acknowledgments from the .github repo [@jlengelbrecht](https://github.com/jlengelbrecht) ([#202](https://github.com/GlycemicGPT/website/pull/202))
+
+### 📦 Dependencies
+
+- chore(deps): update dependency typescript to v7 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#200](https://github.com/GlycemicGPT/website/pull/200))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#201](https://github.com/GlycemicGPT/website/pull/201))
+
+<!-- changelog-cutoff:2026-07-14T14:04:29Z -->
+
+
 ## 2026-07-11
 
 ### 📦 Dependencies
