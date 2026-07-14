@@ -197,6 +197,17 @@ jobs:
             exit 1
           fi
 
+          # Re-check behind-base immediately before merging to shrink the
+          # window where main advances (e.g. a concurrent promotion) between
+          # the checks above and the merge, leaving the squash untested against
+          # the new base. The concurrency group serializes this workflow's own
+          # runs; this covers other actors mutating main.
+          BEHIND_BY=$(gh api "repos/$REPO/compare/main...$HEAD_SHA" --jq '.behind_by')
+          if [ "${BEHIND_BY:-1}" -ne 0 ]; then
+            echo "PR #$PR_NUMBER fell $BEHIND_BY commit(s) behind main; awaiting rebase"
+            exit 0
+          fi
+
           gh pr review "$PR_NUMBER" --approve --repo "$REPO"
 
           # Merge via the REST API rather than `gh pr merge`: gh refuses
