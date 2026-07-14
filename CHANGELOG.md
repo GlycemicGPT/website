@@ -2,6 +2,19 @@
 
 ## 2026-07-14
 
+### 📦 Dependencies
+
+- fix(deps): replace dependency framer-motion with motion ^12.38.0 [@glycemicgpt-renovate](https://github.com/glycemicgpt-renovate) ([#211](https://github.com/GlycemicGPT/website/pull/211))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#212](https://github.com/GlycemicGPT/website/pull/212))
+
+<!-- changelog-cutoff:2026-07-14T19:38:29Z -->
+
+
+## 2026-07-14
+
 ### 🏗️ Infrastructure
 
 #### 💥 Breaking Changes
