@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-07-16
+
+### 📚 Documentation
+
+- docs(governance): adopt fork-based contribution model [@jlengelbrecht](https://github.com/jlengelbrecht) ([#218](https://github.com/lumose-health/website/pull/218))
+
+### 🏗️ Infrastructure
+
+#### 📝 Other Changes
+
+- chore: point CODEOWNERS at the lumose-health web team [@jlengelbrecht](https://github.com/jlengelbrecht) ([#216](https://github.com/lumose-health/website/pull/216))
+
+### ❓ Uncategorized
+
+- [Changelog] Update CHANGELOG.md [@glycemicgpt-release](https://github.com/glycemicgpt-release) ([#217](https://github.com/lumose-health/website/pull/217))
+
+<!-- changelog-cutoff:2026-07-16T02:21:40Z -->
+
+
 ## 2026-07-15
 
 ### 🏗️ Infrastructure
