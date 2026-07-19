@@ -12,14 +12,17 @@ on:
 
 permissions: {}
 
+# Serialize merges so two green PRs can't both merge against the same base and
+# leave the second one silently untested against the first (base-moved race).
+concurrency:
+  group: renovate-auto-merge
+  cancel-in-progress: false
+
 # Why a direct merge instead of arming auto-merge: armed auto-merge never
 # fires on this repo because the org "Protect main" ruleset requires a
 # code-owner review, which the merge app's approval cannot satisfy (apps
 # cannot be code owners). The app is a ruleset bypass actor, so this job
-# enforces the required "Lint, Type Check & Build" check itself: it only runs
-# when the CI workflow_run containing that check concluded SUCCESS, re-checks
-# the check runs inside that exact check suite, and pins the merge to the
-# verified head SHA.
+# re-enforces main's required status checks itself before merging.
 jobs:
   merge-on-green:
     name: Merge on green CI
@@ -36,13 +39,19 @@ jobs:
     steps:
       # SHA-pinned (unlike the tag-pinned actions elsewhere in this repo)
       # because this step mints the token for a ruleset-bypass actor: a
-      # mutated tag here could exfiltrate a merge-anything credential.
+      # mutated tag here could exfiltrate a merge-anything credential. The
+      # token is scoped to the minimum grants the merge needs.
       - name: Generate token for glycemicgpt-merge
         id: merge-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ secrets.MERGE_APP_ID }}
           private-key: ${{ secrets.MERGE_APP_PRIVATE_KEY }}
+          # write: approve + squash-merge the PR. read: the guard reads check
+          # runs (required on a private repo, and correct least-privilege).
+          permission-contents: write
+          permission-pull-requests: write
+          permission-checks: read
 
       - name: Approve and merge Renovate PR at the verified SHA
         env:
@@ -87,34 +96,114 @@ jobs:
             exit 0
           fi
 
-          if [ "$COMMIT_COUNT" -gt 100 ]; then
+          # Base-moved race: the required checks ran against this PR's base as
+          # it was when CI started. If main has advanced, the merged result was
+          # never tested against it. Leave it for Renovate's rebase (which
+          # fires a fresh CI run and a fresh attempt here).
+          BEHIND_BY=$(gh api "repos/$REPO/compare/main...$HEAD_SHA" --jq '.behind_by')
+          if [ "${BEHIND_BY:-1}" -ne 0 ]; then
+            echo "PR #$PR_NUMBER is $BEHIND_BY commit(s) behind main; awaiting rebase"
+            exit 0
+          fi
+
+          if [ "${COMMIT_COUNT:-101}" -gt 100 ]; then
             echo "::notice::PR #$PR_NUMBER has $COMMIT_COUNT commits; leaving it for human review"
             exit 0
           fi
 
-          # A bypass merge must never carry human-pushed commits past the
-          # review requirement. Author login alone is forgeable via the author
-          # email, so require GitHub's signature verification in addition to
-          # the bot author on every commit. Renovate commits are app-signed;
-          # if Renovate is ever reconfigured to push unsigned commits, merging
-          # stops here (fail-closed) — revisit this guard in that case.
+          # Provenance gate. A bypass merge must never carry attacker content
+          # past code-owner review. The PRIMARY branch-integrity control is the
+          # "Restrict renovate branch pushes" ruleset, which permits only the
+          # Renovate app to create/update/delete renovate/* branches, so a
+          # write-access human cannot place a commit on a bot PR at all. This
+          # per-commit check is defense-in-depth behind that ruleset.
+          #
+          # The author login is derived from the forgeable commit-author email,
+          # and GitHub's signature verification attests to the COMMITTER, not
+          # the author — decoupled identities. So we bind BOTH: every commit
+          # must be authored by Renovate AND committed by GitHub web-flow
+          # (noreply@github.com) AND carry a valid GitHub signature (reason
+          # "valid"). Genuine Renovate commits are created through the GitHub
+          # API, which GitHub commits and web-flow-signs. A human spoofing the
+          # author cannot reproduce this: the Contents API leaves the committer
+          # as the human and the commit unsigned, and the Git Data API can fake
+          # the committer email but not a valid GitHub signature — both fail
+          # here (verified empirically against this repo).
           BAD_COMMITS=$(gh api "repos/$REPO/pulls/$PR_NUMBER/commits?per_page=100" \
-            --jq '[.[] | select(((.author.login // "") != "glycemicgpt-renovate[bot]") or (.commit.verification.verified != true))] | length')
+            --jq '[.[] | select(
+                     ((.author.login // "") != "glycemicgpt-renovate[bot]")
+                     or ((.committer.login // "") != "web-flow")
+                     or ((.commit.committer.email // "") != "noreply@github.com")
+                     or (.commit.verification.verified != true)
+                     or (.commit.verification.reason != "valid")
+                   )] | length')
           if [ "$BAD_COMMITS" -ne 0 ]; then
-            echo "::notice::PR #$PR_NUMBER has commits not verifiably authored by Renovate; leaving it for human review"
+            echo "::notice::PR #$PR_NUMBER has commits not verifiably authored by Renovate and signed by GitHub; leaving it for human review"
             exit 0
           fi
 
-          # Belt and braces: the required check must be green inside the
-          # triggering run's own check suite (a same-named check run posted by
-          # anything else lands in a different suite and cannot open the gate).
-          LINT_GREEN=$(gh api -X GET "repos/$REPO/check-suites/$CHECK_SUITE_ID/check-runs" \
-            -f check_name='Lint, Type Check & Build' -f per_page=100 | \
-            jq -r --arg sha "$HEAD_SHA" \
-            '[.check_runs[] | select(.name == "Lint, Type Check & Build")] | (length >= 1) and all(.head_sha == $sha and .conclusion == "success")')
-          if [ "$LINT_GREEN" != "true" ]; then
-            echo "::error::Required check is not green on $HEAD_SHA in check suite $CHECK_SUITE_ID; refusing to merge"
+          # Re-enforce main's ENTIRE required-check set at HEAD_SHA, read from
+          # the live branch rules rather than a hardcoded name — so adding a
+          # second required check can't silently leave this sole enforcer
+          # gating on only the first. Each required context carries an optional
+          # integration_id binding it to a specific app; when set, a matching
+          # check run must come from that app, so a same-named check from a
+          # different app cannot satisfy the gate.
+          REQUIRED=$(gh api "repos/$REPO/rules/branches/main" \
+            --jq '[.[] | select(.type == "required_status_checks")
+                       | .parameters.required_status_checks[]
+                       | {context, integration_id}] | unique')
+          if [ "$(echo "$REQUIRED" | jq 'length')" -eq 0 ]; then
+            echo "::error::Could not read any required status checks for main; refusing to merge"
             exit 1
+          fi
+
+          # Green at this SHA: success check runs, with the producing app id.
+          # Legacy commit statuses are intentionally NOT consulted: any actor
+          # with repo write can POST a status with an arbitrary context+state,
+          # so a status is forgeable and must not satisfy a required check.
+          # The repo uses check runs, not statuses, for its required checks; if
+          # a status-type required check is ever added this gate fails closed
+          # (it will report missing) until this is revisited with a producer
+          # binding.
+          CHECK_RUNS=$(gh api "repos/$REPO/commits/$HEAD_SHA/check-runs?per_page=100" \
+            --jq '[.check_runs[] | select(.conclusion == "success") | {name, app_id: .app.id}]')
+
+          # A required context is satisfied only by a same-named success check
+          # run from the required app (or any app when integration_id is unset).
+          MISSING=$(jq -rn \
+            --argjson req "$REQUIRED" --argjson runs "$CHECK_RUNS" '
+            $req | map(select(. as $r
+              | ([$runs[] | select(.name == $r.context
+                    and ($r.integration_id == null or .app_id == $r.integration_id))] | length) == 0
+            )) | .[].context')
+          if [ -n "$MISSING" ]; then
+            echo "::error::Required checks not green on $HEAD_SHA: $(echo "$MISSING" | paste -sd, -); refusing to merge"
+            exit 1
+          fi
+
+          # Belt and braces against a same-named check run injected into a
+          # different suite: the run we were triggered by (the real CI suite)
+          # must itself be entirely green at HEAD_SHA, with no non-success
+          # check run lingering in it.
+          SUITE_CLEAN=$(gh api "repos/$REPO/check-suites/$CHECK_SUITE_ID/check-runs?per_page=100" \
+            | jq -r --arg sha "$HEAD_SHA" \
+            '[.check_runs[]] | (length >= 1)
+               and all(.head_sha == $sha and .conclusion == "success")')
+          if [ "$SUITE_CLEAN" != "true" ]; then
+            echo "::error::Triggering CI suite $CHECK_SUITE_ID is not fully green on $HEAD_SHA; refusing to merge"
+            exit 1
+          fi
+
+          # Re-check behind-base immediately before merging to shrink the
+          # window where main advances (e.g. a concurrent promotion) between
+          # the checks above and the merge, leaving the squash untested against
+          # the new base. The concurrency group serializes this workflow's own
+          # runs; this covers other actors mutating main.
+          BEHIND_BY=$(gh api "repos/$REPO/compare/main...$HEAD_SHA" --jq '.behind_by')
+          if [ "${BEHIND_BY:-1}" -ne 0 ]; then
+            echo "PR #$PR_NUMBER fell $BEHIND_BY commit(s) behind main; awaiting rebase"
+            exit 0
           fi
 
           gh pr review "$PR_NUMBER" --approve --repo "$REPO"
